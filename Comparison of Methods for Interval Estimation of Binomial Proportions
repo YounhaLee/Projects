@@ -1,0 +1,2071 @@
+#```{r setup, include=FALSE}
+#knitr::opts_chunk$set(echo = TRUE)
+
+#```
+
+
+
+# set uup
+#```{r set up}
+set.seed(1234)
+library('ggplot2')
+#```
+
+#note: blue line on graph: proportion = 0.9
+## method 1 at n =15
+#```{r method one at n fifteen, echo = FALSE}
+#generate data
+N=1500
+p<- seq(0.01,0.99, length.out = 30)
+p
+data15<-lapply(p, function(x) rbinom(N, size = 15, prob = x))
+data100<-lapply(p, function(x) rbinom(N, size = 100, prob = x))
+data200<-lapply(p, function(x) rbinom(N, size = 200, prob = x))
+#Method 1
+
+waldCI<-function(y,n,alpha = 0.05){
+  result<- c(y/n-qnorm(1-alpha/2)*sqrt(((y/n)*(1-y/n))/n),y/n+qnorm(1-alpha/2)*sqrt(((y/n)*(1-y/n))/n))
+  return(result)
+}
+
+
+# Initialize an empty list to store the confidence intervals
+wald.ci.15.list <- list()
+# Iterate over the range of y values (1 to 30)
+for (y in 1:30) {
+  # Initialize an empty vector for each y value
+  wald.ci.15.matrix<-matrix(nrow =1500, ncol = 2)
+  
+  # Iterate over the range of x values (1 to 1500)
+  for (x in 1:1500) {
+    # Calculate the Wald confidence interval for y at index x
+    wald_ci <- waldCI(y = data15[[y]][x], n = 15)
+    wald.ci.15.matrix[x,] <- wald_ci
+  }
+  
+  # Append the matrix of confidence intervals to the list
+  wald.ci.15.list[[y]] <- wald.ci.15.matrix
+  
+  
+}
+
+caprate.wald.ci.15 <- list()
+mr.above.wald.15<-list()
+mr.below.wald.15<-list()
+ave.range.wald.15<-list()
+for (y in 1:30){
+  numb_cap<-0
+  numb_miss_aboveCI<-0
+  numb_miss_belowCI<-0
+  range<-
+    for (x in 1:1500) {
+      
+      #count number of catures
+      if (p[y] >= wald.ci.15.list[[y]][x, 1] & p[y] <= wald.ci.15.list[[y]][x,2])      
+      { numb_cap <- numb_cap + 1
+      }
+      if (p[y] > wald.ci.15.list[[y]][x, 2])      
+      { numb_miss_aboveCI <- numb_miss_aboveCI + 1
+      }
+      if (p[y] < wald.ci.15.list[[y]][x, 1])      
+      { numb_miss_belowCI <- numb_miss_belowCI + 1
+      }
+      range.wald.15<- c(wald.ci.15.list[[y]][x, 2] -  wald.ci.15.list[[y]][x,1])
+    }
+  #capture rate  = number of p we captured with CI / total N =
+  caprate.wald.ci.15[y]<-numb_cap/N
+  mr.above.wald.15[y]<-numb_miss_aboveCI/N
+  mr.below.wald.15[y]<-  numb_miss_belowCI/N
+  ave.range.wald.15[y]<-mean(range.wald.15)
+}
+
+
+######################
+#Graphs for waldm n = 15
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p, caprate.wald.ci.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (Wald) with n=15 ")
+
+# Connect the points with a line
+lines(p, caprate.wald.ci.15, col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing protion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, mr.below.wald.15, pch = 16,ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (Wald) with n=15 ")
+
+# Connect the points with a line
+lines(p, mr.below.wald.15, col = "gray")
+
+#--------------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, mr.above.wald.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (Wald) with n=15 ")
+
+# Connect the points with a line
+lines(p, mr.above.wald.15, col = "gray")
+
+#----------------------------------
+#average length- range.wald.15
+
+# Create a scatter plot---------average length
+plot(p, ave.range.wald.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (Wald) with n=15 ")
+
+# Connect the points with a line
+lines(p, ave.range.wald.15, col = "gray")
+
+
+#```
+## method 1 at n =100
+
+#```{r one at  n eq 100, echo=FALSE}
+#WHEN N =100
+########################################################################
+
+#Method 1
+
+# Initialize an empty list to store the confidence intervals
+wald.ci.100.list <- list()
+# Iterate over the range of y values (1 to 30)
+for (y in 1:30) {
+  # Initialize an empty vector for each y value
+  wald.ci.100.matrix<-matrix(nrow =1500, ncol = 2)
+  
+  # Iterate over the range of x values (1 to 1500)
+  for (x in 1:1500) {
+    # Calculate the Wald confidence interval for y at index x
+    wald_ci <- waldCI(y = data100[[y]][x], n = 100)
+    wald.ci.100.matrix[x,] <- wald_ci
+  }
+  
+  # Append the matrix of confidence intervals to the list
+  wald.ci.100.list[[y]] <- wald.ci.100.matrix
+  
+  
+}
+
+caprate.wald.ci.100 <- list()
+mr.above.wald.100<-list()
+mr.below.wald.100<-list()
+ave.range.wald.100<-list()
+for (y in 1:30){
+  numb_cap<-0
+  numb_miss_aboveCI<-0
+  numb_miss_belowCI<-0
+  range.wald.100<- 0
+  for (x in 1:1500) {
+    
+    #count number of catures
+    if (p[y] >= wald.ci.100.list[[y]][x, 1] & p[y] <= wald.ci.100.list[[y]][x,2])      
+    { numb_cap <- numb_cap + 1
+    }
+    if (p[y] > wald.ci.100.list[[y]][x, 2])      
+    { numb_miss_aboveCI <- numb_miss_aboveCI + 1
+    }
+    if (p[y] < wald.ci.100.list[[y]][x, 1])      
+    { numb_miss_belowCI <- numb_miss_belowCI + 1
+    }
+    range.wald.100<- c(wald.ci.100.list[[y]][x, 2] -  wald.ci.100.list[[y]][x,1])
+  }
+  #capture rate  = number of p we captured with CI / total N =
+  caprate.wald.ci.100[y]<-numb_cap/N
+  mr.above.wald.100[y]<-numb_miss_aboveCI/N
+  mr.below.wald.100[y]<-  numb_miss_belowCI/N
+  ave.range.wald.100[y]<-mean(range.wald.100)
+}
+
+######################
+#Graphs for waldm n = 100
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p, caprate.wald.ci.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (Wald) with n=100 ")
+
+# Connect the points with a line
+lines(p, caprate.wald.ci.100, col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing protion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, mr.below.wald.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (Wald) with n=100 ")
+
+# Connect the points with a line
+lines(p, mr.below.wald.100, col = "gray")
+
+#----------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, mr.above.wald.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (Wald) with n=100 ")
+
+# Connect the points with a line
+lines(p, mr.above.wald.100, col = "gray")
+
+
+#----------------------------------
+#average length- range.wald.100
+
+# Create a scatter plot---------average length
+plot(p, ave.range.wald.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (Wald) with n=100 ")
+
+# Connect the points with a line
+lines(p, ave.range.wald.100, col = "gray")
+#```
+
+## method 1 at n =200
+#```{r method one at n eq 200, echo=FALSE}
+
+# Initialize an empty list to store the confidence intervals
+wald.ci.200.list <- list()
+# Iterate over the range of y values (1 to 30)
+for (y in 1:30) {
+  # Initialize an empty vector for each y value
+  wald.ci.200.matrix<-matrix(nrow =1500, ncol = 2)
+  
+  # Iterate over the range of x values (1 to 1500)
+  for (x in 1:1500) {
+    # Calculate the Wald confidence interval for y at index x
+    wald_ci <- waldCI(y = data200[[y]][x], n = 200)
+    wald.ci.200.matrix[x,] <- wald_ci
+  }
+  
+  # Append the matrix of confidence intervals to the list
+  wald.ci.200.list[[y]] <- wald.ci.200.matrix
+  
+  
+}
+
+caprate.wald.ci.200 <- list()
+mr.above.wald.200<-list()
+mr.below.wald.200<-list()
+ave.range.wald.200<-list()
+for (y in 1:30){
+  numb_cap<-0
+  numb_miss_aboveCI<-0
+  numb_miss_belowCI<-0
+  range.wald.200<- 0
+  for (x in 1:1500) {
+    
+    #count number of catures
+    if (p[y] >= wald.ci.200.list[[y]][x, 1] & p[y] <= wald.ci.200.list[[y]][x,2])      
+    { numb_cap <- numb_cap + 1
+    }
+    if (p[y] > wald.ci.200.list[[y]][x, 2])      
+    { numb_miss_aboveCI <- numb_miss_aboveCI + 1
+    }
+    if (p[y] < wald.ci.200.list[[y]][x, 1])      
+    { numb_miss_belowCI <- numb_miss_belowCI + 1
+    }
+    range.wald.200<- c(wald.ci.200.list[[y]][x, 2] -  wald.ci.200.list[[y]][x,1])
+  }
+  #capture rate  = number of p we captured with CI / total N =
+  caprate.wald.ci.200[y]<-numb_cap/N
+  mr.above.wald.200[y]<-numb_miss_aboveCI/N
+  mr.below.wald.200[y]<-  numb_miss_belowCI/N
+  ave.range.wald.200[y]<-mean(range.wald.200)
+}
+
+######################
+#Graphs for waldm n = 200
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p, caprate.wald.ci.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (Wald) with n=200 ")
+
+# Connect the points with a line
+lines(p, caprate.wald.ci.200, col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing protion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, mr.below.wald.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (Wald) with n=200 ")
+
+# Connect the points with a line
+lines(p, mr.below.wald.200, col = "gray")
+
+
+# Create a scatter plot---------above
+plot(p, mr.above.wald.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (Wald) with n=200 ")
+
+# Connect the points with a line
+lines(p, mr.above.wald.200, col = "gray")
+
+
+
+#average length- range.wald.200
+
+# Create a scatter plot---------average length
+plot(p, ave.range.wald.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (Wald) with n=200 ")
+
+# Connect the points with a line
+lines(p, ave.range.wald.200, col = "gray")
+#```
+
+## method 2 at n = 15
+
+#```{r method two at n eq15, echo=FALSE}
+
+
+# Adjusted Wald Interval Function
+adjwaldCI <- function(y, n, alpha = 0.05) {
+  z <- qnorm(1 - alpha / 2)
+  p_adjusted <- (y+2) /(n+4)
+  se_adjusted<-sqrt(( ((y+2)/(n+4))*(1-((y+2)/(n+4))) )/(n+4))
+  lower <- p_adjusted - z * se_adjusted
+  upper <- p_adjusted + z * se_adjusted
+  return(c(lower, upper))
+}
+
+
+# Initialize an empty list to store the confidence intervals
+adjwald.ci.15.list <- list()
+# Iterate over the range of y values (1 to 30)
+for (y in 1:30) {
+  # Initialize an empty vector for each y value
+  adjwald.ci.15.matrix<-matrix(nrow =1500, ncol = 2)
+  
+  # Iterate over the range of x values (1 to 1500)
+  for (x in 1:1500) {
+    # Calculate the adjwald confidence interval for y at index x
+    adjwald_ci <- adjwaldCI(y = data15[[y]][x], n = 15)
+    adjwald.ci.15.matrix[x,] <- adjwald_ci
+  }
+  
+  # Append the matrix of confidence intervals to the list
+  adjwald.ci.15.list[[y]] <- adjwald.ci.15.matrix
+  
+  
+}
+
+caprate.adjwald.ci.15 <- list()
+mr.above.adjwald.15<-list()
+mr.below.adjwald.15<-list()
+ave.range.adjwald.15<-list()
+for (y in 1:30){
+  numb_cap<-0
+  numb_miss_aboveCI<-0
+  numb_miss_belowCI<-0
+  range<-
+    for (x in 1:1500) {
+      
+      #count number of captures
+      if (p[y] >= adjwald.ci.15.list[[y]][x, 1] & p[y] <= adjwald.ci.15.list[[y]][x,2])      
+      { numb_cap <- numb_cap + 1
+      }
+      if (p[y] > adjwald.ci.15.list[[y]][x, 2])      
+      { numb_miss_aboveCI <- numb_miss_aboveCI + 1
+      }
+      if (p[y] < adjwald.ci.15.list[[y]][x, 1])      
+      { numb_miss_belowCI <- numb_miss_belowCI + 1
+      }
+      range.adjwald.15<- c(adjwald.ci.15.list[[y]][x, 2] -  adjwald.ci.15.list[[y]][x,1])
+    }
+  #capture rate  = number of p we captured with CI / total N =
+  caprate.adjwald.ci.15[y]<-numb_cap/N
+  mr.above.adjwald.15[y]<-numb_miss_aboveCI/N
+  mr.below.adjwald.15[y]<-  numb_miss_belowCI/N
+  ave.range.adjwald.15[y]<-mean(range.adjwald.15)
+}
+
+
+
+######################
+#Graphs for waldaj n = 15
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p, caprate.adjwald.ci.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (adjwald) with n=15 ")
+
+# Connect the points with a line
+lines(p, caprate.adjwald.ci.15, col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing protion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, mr.below.adjwald.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (adjwald) with n=15 ")
+
+# Connect the points with a line
+lines(p, mr.below.adjwald.15, col = "gray")
+
+#--------------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, mr.above.adjwald.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (adjwald) with n=15 ")
+
+# Connect the points with a line
+lines(p, mr.above.adjwald.15, col = "gray")
+#----------------------------------
+#average length- range.adjwald.15
+
+# Create a scatter plot---------average length
+plot(p, ave.range.adjwald.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (adjwald) with n=15 ")
+
+# Connect the points with a line
+lines(p, ave.range.adjwald.15, col = "gray")
+
+
+
+
+
+
+#```
+## method 2 at n = 100
+#```{r method  two at n eq100, echo=FALSE}
+#WHEN N =100
+########################################################################
+
+#Method 1
+
+# Initialize an empty list to store the confidence intervals
+adjwald.ci.100.list <- list()
+# Iterate over the range of y values (1 to 30)
+for (y in 1:30) {
+  # Initialize an empty vector for each y value
+  adjwald.ci.100.matrix<-matrix(nrow =1500, ncol = 2)
+  
+  # Iterate over the range of x values (1 to 1500)
+  for (x in 1:1500) {
+    # Calculate the adjwald confidence interval for y at index x
+    adjwald_ci <- adjwaldCI(y = data100[[y]][x], n = 100)
+    adjwald.ci.100.matrix[x,] <- adjwald_ci
+  }
+  
+  # Append the matrix of confidence intervals to the list
+  adjwald.ci.100.list[[y]] <- adjwald.ci.100.matrix
+  
+  
+}
+
+caprate.adjwald.ci.100 <- list()
+mr.above.adjwald.100<-list()
+mr.below.adjwald.100<-list()
+ave.range.adjwald.100<-list()
+for (y in 1:30){
+  numb_cap<-0
+  numb_miss_aboveCI<-0
+  numb_miss_belowCI<-0
+  range<-
+    for (x in 1:1500) {
+      
+      #count number of catures
+      if (p[y] >= adjwald.ci.100.list[[y]][x, 1] & p[y] <= adjwald.ci.100.list[[y]][x,2])      
+      { numb_cap <- numb_cap + 1
+      }
+      if (p[y] > adjwald.ci.100.list[[y]][x, 2])      
+      { numb_miss_aboveCI <- numb_miss_aboveCI + 1
+      }
+      if (p[y] < adjwald.ci.100.list[[y]][x, 1])      
+      { numb_miss_belowCI <- numb_miss_belowCI + 1
+      }
+      range.adjwald.100<- c(adjwald.ci.100.list[[y]][x, 2] -  adjwald.ci.100.list[[y]][x,1])
+    }
+  #capture rate  = number of p we captured with CI / total N =
+  caprate.adjwald.ci.100[y]<-numb_cap/N
+  mr.above.adjwald.100[y]<-numb_miss_aboveCI/N
+  mr.below.adjwald.100[y]<-  numb_miss_belowCI/N
+  ave.range.adjwald.100[y]<-mean(range.adjwald.100)
+}
+
+
+
+######################
+#Graphs for waldaj n = 100
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p, caprate.adjwald.ci.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (adjwald) with n=100 ")
+
+# Connect the points with a line
+lines(p, caprate.adjwald.ci.100, col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing protion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, mr.below.adjwald.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (adjwald) with n=100 ")
+
+# Connect the points with a line
+lines(p, mr.below.adjwald.100, col = "gray")
+
+#--------------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, mr.above.adjwald.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (adjwald) with n=100 ")
+
+# Connect the points with a line
+lines(p, mr.above.adjwald.100, col = "gray")
+#----------------------------------
+#average length- range.adjwald.100
+
+# Create a scatter plot---------average length
+plot(p, ave.range.adjwald.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (adjwald) with n=100 ")
+
+# Connect the points with a line
+lines(p, ave.range.adjwald.100, col = "gray")
+
+
+
+#```
+## method 2 at n = 200
+#```{r method  two at n eq 200, echo=FALSE}
+#WHEN N =200
+########################################################################
+
+
+# Initialize an empty list to store the confidence intervals
+adjwald.ci.200.list <- list()
+# Iterate over the range of y values (1 to 30)
+for (y in 1:30) {
+  # Initialize an empty vector for each y value
+  adjwald.ci.200.matrix<-matrix(nrow =1500, ncol = 2)
+  
+  # Iterate over the range of x values (1 to 1500)
+  for (x in 1:1500) {
+    # Calculate the adjwald confidence interval for y at index x
+    adjwald_ci <- adjwaldCI(y = data200[[y]][x], n = 200)
+    adjwald.ci.200.matrix[x,] <- adjwald_ci
+  }
+  
+  # Append the matrix of confidence intervals to the list
+  adjwald.ci.200.list[[y]] <- adjwald.ci.200.matrix
+  
+  
+}
+
+caprate.adjwald.ci.200 <- list()
+mr.above.adjwald.200<-list()
+mr.below.adjwald.200<-list()
+ave.range.adjwald.200<-list()
+for (y in 1:30){
+  numb_cap<-0
+  numb_miss_aboveCI<-0
+  numb_miss_belowCI<-0
+  range<-
+    for (x in 1:1500) {
+      
+      #count number of catures
+      if (p[y] >= adjwald.ci.200.list[[y]][x, 1] & p[y] <= adjwald.ci.200.list[[y]][x,2])      
+      { numb_cap <- numb_cap + 1
+      }
+      if (p[y] > adjwald.ci.200.list[[y]][x, 2])      
+      { numb_miss_aboveCI <- numb_miss_aboveCI + 1
+      }
+      if (p[y] < adjwald.ci.200.list[[y]][x, 1])      
+      { numb_miss_belowCI <- numb_miss_belowCI + 1
+      }
+      range.adjwald.200<- c(adjwald.ci.200.list[[y]][x, 2] -  adjwald.ci.200.list[[y]][x,1])
+    }
+  #capture rate  = number of p we captured with CI / total N =
+  caprate.adjwald.ci.200[y]<-numb_cap/N
+  mr.above.adjwald.200[y]<-numb_miss_aboveCI/N
+  mr.below.adjwald.200[y]<-  numb_miss_belowCI/N
+  ave.range.adjwald.200[y]<-mean(range.adjwald.200)
+}
+
+
+######################
+#Graphs for adjwald n = 200
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p, caprate.adjwald.ci.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (adjwald) with n=200 ")
+
+# Connect the points with a line
+lines(p, caprate.adjwald.ci.200, col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing protion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, mr.below.adjwald.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (adjwald) with n=200 ")
+
+# Connect the points with a line
+lines(p, mr.below.adjwald.200, col = "gray")
+
+#----------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, mr.above.adjwald.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (adjwald) with n=200 ")
+
+# Connect the points with a line
+lines(p, mr.above.adjwald.200, col = "gray")
+
+
+#----------------------------------
+#average length- range.adjwald.200
+
+# Create a scatter plot---------average length
+plot(p, ave.range.adjwald.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (adjwald) with n=200 ")
+
+# Connect the points with a line
+lines(p, ave.range.adjwald.200, col = "gray")
+
+
+
+#```
+
+##  method 3
+
+## method 3 at n = 15
+#```{r method three at n eq 15, echo=FALSE}
+# Clopper-Pearson (Exact) interval
+exactCI <- function(y, n, alpha = 0.05) {
+  if (y == 0) {
+    lower <- 0
+    upper<- 0
+  }
+  else if (y == n) {
+    lower<- 1
+    upper <- 1
+  }
+  else {
+    lower <- 1 / (1 + (n - y + 1) / (y * qf(alpha/2, 2 * y, 2 * (n - y + 1))))
+    upper <- 1 / (1 + (n - y) / ((y + 1) * qf(1-alpha/2, 2 * (y + 1), 2 * (n - y))))
+  }
+  return(c(lower, upper))
+}
+
+
+
+# Initialize an empty list to store the confidence intervals
+exact.ci.15.list <- list()
+# Iterate over the range of y values (1 to 30)
+for (y in 1:30) {
+  # Initialize an empty vector for each y value
+  exact.ci.15.matrix<-matrix(nrow =1500, ncol = 2)
+  
+  # Iterate over the range of x values (1 to 1500)
+  for (x in 1:1500) {
+    # Calculate the exact confidence interval for y at index x
+    exact_ci <- exactCI(y = data15[[y]][x], n = 15)
+    exact.ci.15.matrix[x,] <- exact_ci
+  }
+  
+  # Append the matrix of confidence intervals to the list
+  exact.ci.15.list[[y]] <- exact.ci.15.matrix
+  
+  
+}
+
+caprate.exact.ci.15 <- list()
+mr.above.exact.15<-list()
+mr.below.exact.15<-list()
+ave.range.exact.15<-list()
+for (y in 1:30){
+  numb_cap<-0
+  numb_miss_aboveCI<-0
+  numb_miss_belowCI<-0
+  range<-
+    for (x in 1:1500) {
+      
+      #count number of captures
+      if (p[y] >= exact.ci.15.list[[y]][x, 1] & p[y] <= exact.ci.15.list[[y]][x,2])      
+      { numb_cap <- numb_cap + 1
+      }
+      if (p[y] > exact.ci.15.list[[y]][x, 2])      
+      { numb_miss_aboveCI <- numb_miss_aboveCI + 1
+      }
+      if (p[y] < exact.ci.15.list[[y]][x, 1])      
+      { numb_miss_belowCI <- numb_miss_belowCI + 1
+      }
+      range.exact.15<- c(exact.ci.15.list[[y]][x, 2] -  exact.ci.15.list[[y]][x,1])
+    }
+  #capture rate  = number of p we captured with CI / total N =
+  caprate.exact.ci.15[y]<-numb_cap/N
+  mr.above.exact.15[y]<-numb_miss_aboveCI/N
+  mr.below.exact.15[y]<-  numb_miss_belowCI/N
+  ave.range.exact.15[y]<-mean(range.exact.15)
+}
+
+
+######################
+#Graphs for exact n = 15
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p, caprate.exact.ci.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (exact) with n=15 ")
+
+# Connect the points with a line
+lines(p, caprate.exact.ci.15, col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing protion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, mr.below.exact.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (exact) with n=15 ")
+
+# Connect the points with a line
+lines(p, mr.below.exact.15, col = "gray")
+
+#--------------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, mr.above.exact.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (exact) with n=15 ")
+
+# Connect the points with a line
+lines(p, mr.above.exact.15, col = "gray")
+#----------------------------------
+#average length- range.exact.15
+
+# Create a scatter plot---------average length
+plot(p, ave.range.exact.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (exact) with n=15 ")
+
+# Connect the points with a line
+lines(p, ave.range.exact.15, col = "gray")
+
+#```
+## method 3 at n = 100
+#```{r method three at n eq 100, echo=FALSE}
+
+#WHEN N =100
+########################################################################
+
+#Method 1
+
+# Initialize an empty list to store the confidence intervals
+exact.ci.100.list <- list()
+# Iterate over the range of y values (1 to 30)
+for (y in 1:30) {
+  # Initialize an empty vector for each y value
+  exact.ci.100.matrix<-matrix(nrow =1500, ncol = 2)
+  
+  # Iterate over the range of x values (1 to 1500)
+  for (x in 1:1500) {
+    # Calculate the exact confidence interval for y at index x
+    exact_ci <- exactCI(y = data100[[y]][x], n = 100)
+    exact.ci.100.matrix[x,] <- exact_ci
+  }
+  
+  # Append the matrix of confidence intervals to the list
+  exact.ci.100.list[[y]] <- exact.ci.100.matrix
+  
+  
+}
+
+caprate.exact.ci.100 <- list()
+mr.above.exact.100<-list()
+mr.below.exact.100<-list()
+ave.range.exact.100<-list()
+for (y in 1:30){
+  numb_cap<-0
+  numb_miss_aboveCI<-0
+  numb_miss_belowCI<-0
+  range<-
+    for (x in 1:1500) {
+      
+      #count number of catures
+      if (p[y] >= exact.ci.100.list[[y]][x, 1] & p[y] <= exact.ci.100.list[[y]][x,2])      
+      { numb_cap <- numb_cap + 1
+      }
+      if (p[y] > exact.ci.100.list[[y]][x, 2])      
+      { numb_miss_aboveCI <- numb_miss_aboveCI + 1
+      }
+      if (p[y] < exact.ci.100.list[[y]][x, 1])      
+      { numb_miss_belowCI <- numb_miss_belowCI + 1
+      }
+      range.exact.100<- c(exact.ci.100.list[[y]][x, 2] -  exact.ci.100.list[[y]][x,1])
+    }
+  #capture rate  = number of p we captured with CI / total N =
+  caprate.exact.ci.100[y]<-numb_cap/N
+  mr.above.exact.100[y]<-numb_miss_aboveCI/N
+  mr.below.exact.100[y]<-  numb_miss_belowCI/N
+  ave.range.exact.100[y]<-mean(range.exact.100)
+}
+mr.below.exact.100
+######################
+#Graphs for waldm n = 100
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p, caprate.exact.ci.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (exact) with n=100 ")
+
+# Connect the points with a line
+lines(p, caprate.exact.ci.100, col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing protion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, mr.below.exact.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (exact) with n=100 ")
+
+# Connect the points with a line
+lines(p, mr.below.exact.100, col = "gray")
+
+#--------------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, mr.above.exact.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (exact) with n=100 ")
+
+# Connect the points with a line
+lines(p, mr.above.exact.100, col = "gray")
+#----------------------------------
+#average length- range.exact.100
+
+# Create a scatter plot---------average length
+plot(p, ave.range.exact.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (exact) with n=100 ")
+
+# Connect the points with a line
+lines(p, ave.range.exact.100, col = "gray")
+
+#```
+## method 3 at n = 200
+#```{r method threeat n eq  200, echo=FALSE}
+
+
+
+# Initialize an empty list to store the confidence intervals
+exact.ci.200.list <- list()
+# Iterate over the range of y values (1 to 30)
+for (y in 1:30) {
+  # Initialize an empty vector for each y value
+  exact.ci.200.matrix<-matrix(nrow =1500, ncol = 2)
+  
+  # Iterate over the range of x values (1 to 1500)
+  for (x in 1:1500) {
+    # Calculate the exact confidence interval for y at index x
+    exact_ci <- exactCI(y = data200[[y]][x], n = 200)
+    exact.ci.200.matrix[x,] <- exact_ci
+  }
+  
+  # Append the matrix of confidence intervals to the list
+  exact.ci.200.list[[y]] <- exact.ci.200.matrix
+  
+  
+}
+
+caprate.exact.ci.200 <- list()
+mr.above.exact.200<-list()
+mr.below.exact.200<-list()
+ave.range.exact.200<-list()
+for (y in 1:30){
+  numb_cap<-0
+  numb_miss_aboveCI<-0
+  numb_miss_belowCI<-0
+  range<-
+    for (x in 1:1500) {
+      
+      #count number of catures
+      if (p[y] >= exact.ci.200.list[[y]][x, 1] & p[y] <= exact.ci.200.list[[y]][x,2])      
+      { numb_cap <- numb_cap + 1
+      }
+      if (p[y] > exact.ci.200.list[[y]][x, 2])      
+      { numb_miss_aboveCI <- numb_miss_aboveCI + 1
+      }
+      if (p[y] < exact.ci.200.list[[y]][x, 1])      
+      { numb_miss_belowCI <- numb_miss_belowCI + 1
+      }
+      range.exact.200<- c(exact.ci.200.list[[y]][x, 2] -  exact.ci.200.list[[y]][x,1])
+    }
+  #capture rate  = number of p we captured with CI / total N =
+  caprate.exact.ci.200[y]<-numb_cap/N
+  mr.above.exact.200[y]<-numb_miss_aboveCI/N
+  mr.below.exact.200[y]<-  numb_miss_belowCI/N
+  ave.range.exact.200[y]<-mean(range.exact.200)
+}
+caprate.exact.ci.200
+mr.below.exact.200
+mr.above.exact.200
+ave.range.exact.200
+
+######################
+#Graphs for waldm n = 200
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p, caprate.exact.ci.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (exact) with n=200 ")
+
+# Connect the points with a line
+lines(p, caprate.exact.ci.200, col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing protion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, mr.below.exact.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (exact) with n=200 ")
+
+# Connect the points with a line
+lines(p, mr.below.exact.200, col = "gray")
+
+#----------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, mr.above.exact.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (exact) with n=200 ")
+
+# Connect the points with a line
+lines(p, mr.above.exact.200, col = "gray")
+
+
+#----------------------------------
+#average length- range.exact.200
+
+# Create a scatter plot---------average length
+plot(p, ave.range.exact.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (exact) with n=200 ")
+
+# Connect the points with a line
+lines(p, ave.range.exact.200, col = "gray")
+
+#```
+
+
+
+## method 4 at n = 15
+#```{r method four at n eq  15, echo=FALSE}
+
+
+# Score interval
+scoreCI <- function(y, n, alpha = 0.05) {
+  p_hat <- y/n
+  z_alpha <- qnorm(1 - alpha/2)
+  lower <- (p_hat+(z_alpha)^2/(2*n)-z_alpha*sqrt((p_hat*(1-p_hat)+(z_alpha)^2/(4*n))/n))                /(1+(z_alpha)^2/n)
+  upper <- (p_hat+(z_alpha)^2/(2*n)+z_alpha*sqrt((p_hat*(1-p_hat)+(z_alpha)^2/(4*n))/n))                /(1+(z_alpha)^2/n)
+  return(c(lower, upper))
+}
+
+
+
+# Initialize an empty list to store the confidence intervals
+score.ci.15.list <- list()
+# Iterate over the range of y values (1 to 30)
+for (y in 1:30) {
+  # Initialize an empty vector for each y value
+  score.ci.15.matrix<-matrix(nrow =1500, ncol = 2)
+  
+  # Iterate over the range of x values (1 to 1500)
+  for (x in 1:1500) {
+    # Calculate the score confidence interval for y at index x
+    score_ci <- scoreCI(y = data15[[y]][x], n = 15)
+    score.ci.15.matrix[x,] <- score_ci
+  }
+  
+  # Append the matrix of confidence intervals to the list
+  score.ci.15.list[[y]] <- score.ci.15.matrix
+  
+  
+}
+
+caprate.score.ci.15 <- list()
+mr.above.score.15<-list()
+mr.below.score.15<-list()
+ave.range.score.15<-list()
+for (y in 1:30){
+  numb_cap<-0
+  numb_miss_aboveCI<-0
+  numb_miss_belowCI<-0
+  range<-
+    for (x in 1:1500) {
+      
+      #count number of catures
+      if (p[y] >= score.ci.15.list[[y]][x, 1] & p[y] <= score.ci.15.list[[y]][x,2])      
+      { numb_cap <- numb_cap + 1
+      }
+      if (p[y] > score.ci.15.list[[y]][x, 2])      
+      { numb_miss_aboveCI <- numb_miss_aboveCI + 1
+      }
+      if (p[y] < score.ci.15.list[[y]][x, 1])      
+      { numb_miss_belowCI <- numb_miss_belowCI + 1
+      }
+      range.score.15<- c(score.ci.15.list[[y]][x, 2] -  score.ci.15.list[[y]][x,1])
+    }
+  #capture rate  = number of p we captured with CI / total N =
+  caprate.score.ci.15[y]<-numb_cap/N
+  mr.above.score.15[y]<-numb_miss_aboveCI/N
+  mr.below.score.15[y]<-  numb_miss_belowCI/N
+  ave.range.score.15[y]<-mean(range.score.15)
+}
+
+
+######################
+#Graphs for waldm n = 15
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p, caprate.score.ci.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (score) with n=15 ")
+
+# Connect the points with a line
+lines(p, caprate.score.ci.15, col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing protion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, mr.below.score.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (score) with n=15 ")
+
+# Connect the points with a line
+lines(p, mr.below.score.15, col = "gray")
+
+#--------------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, mr.above.score.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (score) with n=15 ")
+
+# Connect the points with a line
+lines(p, mr.above.score.15, col = "gray")
+#----------------------------------
+#average length- range.score.15
+
+# Create a scatter plot---------average length
+plot(p, ave.range.score.15, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (score) with n=15 ")
+
+# Connect the points with a line
+lines(p, ave.range.score.15, col = "gray")
+
+#```
+# method 4 at n = 100
+#```{r method four at n eq  100, echo=FALSE}
+
+# Initialize an empty list to store the confidence intervals
+score.ci.100.list <- list()
+# Iterate over the range of y values (1 to 30)
+for (y in 1:30) {
+  # Initialize an empty vector for each y value
+  score.ci.100.matrix<-matrix(nrow =1500, ncol = 2)
+  
+  # Iterate over the range of x values (1 to 1500)
+  for (x in 1:1500) {
+    # Calculate the score confidence interval for y at index x
+    score_ci <- scoreCI(y = data100[[y]][x], n = 100)
+    score.ci.100.matrix[x,] <- score_ci
+  }
+  
+  # Append the matrix of confidence intervals to the list
+  score.ci.100.list[[y]] <- score.ci.100.matrix
+  
+  
+}
+
+caprate.score.ci.100 <- list()
+mr.above.score.100<-list()
+mr.below.score.100<-list()
+ave.range.score.100<-list()
+for (y in 1:30){
+  numb_cap<-0
+  numb_miss_aboveCI<-0
+  numb_miss_belowCI<-0
+  range<-
+    for (x in 1:1500) {
+      
+      #count number of catures
+      if (p[y] >= score.ci.100.list[[y]][x, 1] & p[y] <= score.ci.100.list[[y]][x,2])      
+      { numb_cap <- numb_cap + 1
+      }
+      if (p[y] > score.ci.100.list[[y]][x, 2])      
+      { numb_miss_aboveCI <- numb_miss_aboveCI + 1
+      }
+      if (p[y] < score.ci.100.list[[y]][x, 1])      
+      { numb_miss_belowCI <- numb_miss_belowCI + 1
+      }
+      range.score.100<- c(score.ci.100.list[[y]][x, 2] -  score.ci.100.list[[y]][x,1])
+    }
+  #capture rate  = number of p we captured with CI / total N =
+  caprate.score.ci.100[y]<-numb_cap/N
+  mr.above.score.100[y]<-numb_miss_aboveCI/N
+  mr.below.score.100[y]<-  numb_miss_belowCI/N
+  ave.range.score.100[y]<-mean(range.score.100)
+}
+
+
+######################
+#Graphs for score n = 100
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p, caprate.score.ci.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (score) with n=100 ")
+
+# Connect the points with a line
+lines(p, caprate.score.ci.100, col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing protion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, mr.below.score.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (score) with n=100 ")
+
+# Connect the points with a line
+lines(p, mr.below.score.100, col = "gray")
+
+#----------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, mr.above.score.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (score) with n=100 ")
+
+# Connect the points with a line
+lines(p, mr.above.score.100, col = "gray")
+
+
+#----------------------------------
+#average length- range.score.100
+
+# Create a scatter plot---------average length
+plot(p, ave.range.score.100, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (score) with n=100 ")
+
+# Connect the points with a line
+lines(p, ave.range.score.100, col = "gray")
+
+
+
+
+#```
+
+# method 4 at n = 200
+#```{r method four at n eq 200, echo=FALSE}
+
+
+# Initialize an empty list to store the confidence intervals
+score.ci.200.list <- list()
+# Iterate over the range of y values (1 to 30)
+for (y in 1:30) {
+  # Initialize an empty vector for each y value
+  score.ci.200.matrix<-matrix(nrow =1500, ncol = 2)
+  
+  # Iterate over the range of x values (1 to 1500)
+  for (x in 1:1500) {
+    # Calculate the score confidence interval for y at index x
+    score_ci <- scoreCI(y = data200[[y]][x], n = 200)
+    score.ci.200.matrix[x,] <- score_ci
+  }
+  
+  # Append the matrix of confidence intervals to the list
+  score.ci.200.list[[y]] <- score.ci.200.matrix
+  
+  
+}
+
+caprate.score.ci.200 <- list()
+mr.above.score.200<-list()
+mr.below.score.200<-list()
+ave.range.score.200<-list()
+for (y in 1:30){
+  numb_cap<-0
+  numb_miss_aboveCI<-0
+  numb_miss_belowCI<-0
+  range<-
+    for (x in 1:1500) {
+      
+      #count number of catures
+      if (p[y] >= score.ci.200.list[[y]][x, 1] & p[y] <= score.ci.200.list[[y]][x,2])      
+      { numb_cap <- numb_cap + 1
+      }
+      if (p[y] > score.ci.200.list[[y]][x, 2])      
+      { numb_miss_aboveCI <- numb_miss_aboveCI + 1
+      }
+      if (p[y] < score.ci.200.list[[y]][x, 1])      
+      { numb_miss_belowCI <- numb_miss_belowCI + 1
+      }
+      range.score.200<- c(score.ci.200.list[[y]][x, 2] -  score.ci.200.list[[y]][x,1])
+    }
+  #capture rate  = number of p we captured with CI / total N =
+  caprate.score.ci.200[y]<-numb_cap/N
+  mr.above.score.200[y]<-numb_miss_aboveCI/N
+  mr.below.score.200[y]<-  numb_miss_belowCI/N
+  ave.range.score.200[y]<-mean(range.score.200)
+}
+
+######################
+#Graphs for waldm n = 200
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p, caprate.score.ci.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (score) with n=200 ")
+
+# Connect the points with a line
+lines(p, caprate.score.ci.200, col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing protion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, mr.below.score.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (score) with n=200 ")
+
+# Connect the points with a line
+lines(p, mr.below.score.200, col = "gray")
+
+#----------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, mr.above.score.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (score) with n=200 ")
+
+# Connect the points with a line
+lines(p, mr.above.score.200, col = "gray")
+
+
+#----------------------------------
+#average length- range.score.200
+
+# Create a scatter plot---------average length
+plot(p, ave.range.score.200, pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (score) with n=200 ")
+
+# Connect the points with a line
+lines(p, ave.range.score.200, col = "gray")
+
+
+
+
+#```
+
+
+# Method 5 and 6 function (bootstrap quantile, bootstrap T)
+#```{r method five six setup, echo=FALSE}
+
+
+
+#change the number of n here, can be 15,100, and 200
+
+# Generate CIs and calculate statistics
+
+boot.CI <- function(p_values, n, N, B) {
+  boot.result <- matrix(NA, nrow = length(p_values), ncol = 8,
+                        dimnames = list(NULL, c("proportion_capture_true.raw", "proportion_miss_below.raw",
+                                                "proportion_miss_above.raw", "average_length.raw","proportion_capture_true.T", "proportion_miss_below.T",
+                                                "proportion_miss_above.T", "average_length.T")))
+  
+  
+  # Perform simulations for each combination of n and p
+  for(i in seq_along(p_values)){
+    
+    # Generate the true parameter value
+    true_value <- p_values[i]
+    
+    lower_quantile <- c()
+    upper_quantile <- c()
+    lower_t <- c()
+    upper_t <- c()
+    
+    # Bootstrap estimates
+    for(j in 1:N){
+      # Generate the original sample proportions (phat)
+      phat <- rbinom(1, size = n, prob = p_values[i]) / n
+      
+      # Bootstrap estimates
+      bootstrap_estimates <- replicate(B, {
+        # Generate bootstrap sample by resampling from observed data
+        bootstrap_sample <- rbinom(1, size = n, prob = phat)
+        # Calculate estimator (phat) for bootstrap sample
+        p_hat_boot <- bootstrap_sample / n
+        return(p_hat_boot)
+      })
+      
+      
+      # Calculate confidence interval using raw percentile method
+      lower_quantile[j] <- quantile(bootstrap_estimates, alpha/2)  # 2.5th percentile
+      upper_quantile[j] <- quantile(bootstrap_estimates, 1-alpha/2)  # 97.5th percentile
+      
+      #--------------------------------------------------------------
+      #bootstrap.t interval
+      se <- sd(bootstrap_estimates)
+      lower_t[j] <- mean(bootstrap_estimates) - qt(1 - alpha / 2, df = length(bootstrap_estimates) - 1) * se
+      upper_t[j] <- mean(bootstrap_estimates) + qt(1 - alpha / 2, df = length(bootstrap_estimates) - 1) * se
+      
+      #------------------------------------------------------------------
+      
+    }
+    
+    boot.CI <- cbind(lower_quantile, upper_quantile)
+    
+    
+    #-------------------
+    #boot.t intervals
+    boot.T.CI<-cbind(lower_t, upper_t)
+    #-------------
+    # Check if true value is within the quantile confidence interval
+    
+    proportion_capture_true <- sum((true_value >= boot.CI[,1] & true_value <= boot.CI[,2])) / N
+    proportion_miss_above <- sum(true_value > boot.CI[,2]) / N
+    proportion_miss_below <- sum(true_value < boot.CI[,1]) / N
+    average_length <- sum(boot.CI[,2] - boot.CI[,1]) / N
+    
+    #Check if true value is within the T confidence interval
+    
+    #_________________________________
+    proportion_capture_true_T <- sum((true_value >= boot.T.CI[,1] & true_value <= boot.T.CI[,2])) / N
+    proportion_miss_above_T <- sum(true_value > boot.T.CI[,2]) / N
+    proportion_miss_below_T <- sum(true_value < boot.T.CI[,1]) / N
+    average_length_T <- sum(boot.T.CI[,2] - boot.T.CI[,1]) / N
+    
+    
+    #overall result
+    boot.result[i, ] <- c(proportion_capture_true, proportion_miss_below, proportion_miss_above, average_length,
+                          proportion_capture_true_T, proportion_miss_below_T, proportion_miss_above_T, average_length_T)
+    
+    
+    #-------------------------
+    
+  }
+  return(boot.result)
+}
+#```
+
+#method 5 and 6 (raw and T) at n=15
+#```{r method five  at n eq 15, echo=FALSE}
+# Simulation setup
+N <- 1500
+B <- 200
+alpha <- 0.05
+p_values <- seq(0.01, 0.99, length.out = 30)
+
+#change the number of n here, can be 15,100, and 200
+n <-15
+
+answer<-matrix(nrow=length(p_values),ncol = 8)
+for (z in seq_along(p_values)){
+  r<-boot.CI(p_values[z],n,N,B)
+  answer[z,]<- r
+}
+
+
+
+
+######################
+#Graphs for n = 15
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p_values, answer[,1], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (raw) with n=15 ")
+
+# Connect the points with a line
+lines(p_values,answer[,1], col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing portion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, answer[,2], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (bootstrap quantile) with n=15 ")
+
+# Connect the points with a line
+lines(p, answer[,2], col = "gray")
+
+#--------------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, answer[,3], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (bootstrap quantile) with n=15 ")
+
+# Connect the points with a line
+lines(p, answer[,3], col = "gray")
+#----------------------------------
+#average length- range.bootstrap quantile.15
+
+# Create a scatter plot---------average length
+plot(p, answer[,4], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = " (bootstrap quantile) with n=15 ")
+
+# Connect the points with a line
+lines(p, answer[,4], col = "gray")
+
+#```
+
+
+######################
+#Graphs for n = 15 - method 6
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p_values, answer[,5], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (bootstrap T) with n=15 ")
+
+# Connect the points with a line
+lines(p_values,answer[,5], col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing portion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, answer[,6], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (bootstrap T) with n=15 ")
+
+# Connect the points with a line
+lines(p, answer[,6], col = "gray")
+
+#--------------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, answer[,7], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (bootstrap T) with n=15 ")
+
+# Connect the points with a line
+lines(p, answer[,7], col = "gray")
+#----------------------------------
+#average length- range.bootstrap T.15
+
+# Create a scatter plot---------average length
+plot(p, answer[,8], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (bootstrap T) with n=15 ")
+
+# Connect the points with a line
+lines(p, answer[,8], col = "gray")
+#```
+
+
+# Combine range data for plotting
+data.range.15 <- data.frame(
+  p = p,
+  ave.range.wald.15 = as.numeric(ave.range.wald.15),
+  ave.range.adjwald.15 = as.numeric(ave.range.adjwald.15),
+  ave.range.exact.15 = as.numeric(ave.range.exact.15),
+  ave.range.score.15 = as.numeric(ave.range.score.15),
+  bootstrap_quantile = as.numeric(answer[,4]),
+  bootstrap_T = as.numeric(answer[,8])
+)
+
+# Create ggplot
+ggplot(data.range.15, aes(x = p)) +
+  # Set y-axis limits
+  scale_y_continuous(limits=c(0,0.6))+
+  # Add points and lines for ave.range.wald.15
+  geom_point(aes(y = ave.range.wald.15), color = "red", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = ave.range.wald.15), color = "red") +
+  # Add points and lines for ave.range.adjwald.15
+  geom_point(aes(y = ave.range.adjwald.15), color = "blue", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = ave.range.adjwald.15), color = "blue") +
+  # Add points and lines for ave.range.exact.15
+  geom_point(aes(y = ave.range.exact.15), color = "green", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = ave.range.exact.15), color = "green") +
+  # Add points and lines for ave.range.score.15
+  geom_point(aes(y = ave.range.score.15), color = "orange", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = ave.range.score.15), color = "orange") +
+  # Add points and lines for bootstrap_quantile
+  geom_point(aes(y = bootstrap_quantile), color = "purple", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = bootstrap_quantile), color = "purple") +
+  # Add points and lines for bootstrap_T
+  geom_point(aes(y = bootstrap_T), color = "black", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = bootstrap_T), color = "black") +
+  
+  # Set x-axis and y-axis labels
+  xlab("p") + ylab("Average CI Range") +
+  # Set plot title
+  labs(title = "Average CI Length with n=15", caption = "Color note:\n wald = red, adjwald = blue, exact = green, score = orange, B_raw = purple, B_T = black")
+
+
+# Combine data-caprate for plotting
+data.caprate.15 <- data.frame(
+  p = p,
+  caprate.wald.ci.15 = as.numeric(caprate.wald.ci.15),
+  caprate.adjwald.ci.15 = as.numeric(caprate.adjwald.ci.15),
+  caprate.exact.ci.15 = as.numeric(caprate.exact.ci.15),
+  caprate.score.ci.15 = as.numeric(caprate.score.ci.15),
+  bootstrap_quantile = as.numeric(answer[,1]),
+  bootstrap_T = as.numeric(answer[,5])
+)
+
+# Create ggplot
+ggplot(data.caprate.15 , aes(x = p)) +
+  scale_y_continuous(limits=c(0,1))+
+  # Add points and lines for caprate.wald.15
+  geom_point(aes(y = caprate.wald.ci.15), color = "red", pch = 16) +
+ geom_line(aes(y = caprate.wald.ci.15), color = "red") +
+  # Add points and lines for caprate.adjwald.ci.15
+  geom_point(aes(y = caprate.adjwald.ci.15), color = "blue", pch = 16) +
+ geom_line(aes(y = caprate.adjwald.ci.15), color = "blue") +
+  # Add points and lines for caprate.exact.ci.15
+  geom_point(aes(y = caprate.exact.ci.15), color = "green", pch = 16) +
+ geom_line(aes(y = caprate.exact.ci.15), color = "green") +
+  # Add points and lines for caprate.score.ci.15
+  geom_point(aes(y = caprate.score.ci.15), color = "orange", pch = 16) +
+ geom_line(aes(y = caprate.score.ci.15), color = "orange") +
+  # Add points and lines for bootstrap_quantile
+  geom_point(aes(y = bootstrap_quantile), color = "purple", pch = 16) +
+ geom_line(aes(y = bootstrap_quantile), color = "purple") +
+  # Add points and lines for bootstrap_T
+  geom_point(aes(y = bootstrap_T), color = "black", pch = 16) +
+ geom_line(aes(y = bootstrap_T), color = "black") +
+  
+  # Set x-axis and y-axis labels
+  xlab("p") + ylab("capture rate") +
+  # Set plot title
+  labs(title = "capture rate comparison with n=15", caption = "Color note:\n wald = red, adjwald = blue, exact = green, score = orange, B_raw = purple, B_T = black")
+
+
+
+
+
+#missing portion below n = 15
+# Combine data missing portion below for plotting
+data.below.15 <- data.frame(
+  p = p,
+  mr.below.wald.15 = as.numeric(mr.below.wald.15),
+  mr.below.adjwald.15 = as.numeric(mr.below.adjwald.15),
+  mr.below.exact.15 = as.numeric(mr.below.exact.15),
+  mr.below.score.15 = as.numeric(mr.below.score.15),
+  bootstrap_quantile = as.numeric(answer[,2]),
+  bootstrap_T = as.numeric(answer[,6])
+)
+
+# Create ggplot
+ggplot(data.below.15 , aes(x = p)) +
+  scale_y_continuous(limits=c(0,1))+
+  # Add points and lines for mr.belowwald.15
+  geom_point(aes(y = mr.below.wald.15), color = "red", pch = 16) +
+  geom_line(aes(y = mr.below.wald.15), color = "red") +
+  # Add points and lines for mr.below.adjwald.15
+  geom_point(aes(y = mr.below.adjwald.15), color = "blue", pch = 16) +
+  geom_line(aes(y = mr.below.adjwald.15), color = "blue") +
+  # Add points and lines for mr.below.exact.15
+  geom_point(aes(y = mr.below.exact.15), color = "green", pch = 16) +
+  geom_line(aes(y = mr.below.exact.15), color = "green") +
+  # Add points and lines for mr.below.score.15
+  geom_point(aes(y = mr.below.score.15), color = "orange", pch = 16) +
+  geom_line(aes(y = mr.below.score.15), color = "orange") +
+  # Add points and lines for bootstrap_quantile
+  geom_point(aes(y = bootstrap_quantile), color = "purple", pch = 16) +
+  geom_line(aes(y = bootstrap_quantile), color = "purple") +
+  # Add points and lines for bootstrap_T
+  geom_point(aes(y = bootstrap_T), color = "black", pch = 16) +
+  geom_line(aes(y = bootstrap_T), color = "black") +
+  
+  # Set x-axis and y-axis labels
+  xlab("p") + ylab("missing portion below CI") +
+  # Set plot title
+  labs(title = "missing portion below CI with n=15", caption = "Color note:\n wald = red, adjwald = blue, exact = green, score = orange, B_raw = purple, B_T = black")
+
+
+
+#missing portion above n = 15
+# Combine data missing portion above for plotting
+data.above.15 <- data.frame(
+  p = p,
+  mr.above.wald.15 = as.numeric(mr.above.wald.15),
+  mr.above.adjwald.15 = as.numeric(mr.above.adjwald.15),
+  mr.above.exact.15 = as.numeric(mr.above.exact.15),
+  mr.above.score.15 = as.numeric(mr.above.score.15),
+  bootstrap_quantile = as.numeric(answer[,3]),
+  bootstrap_T = as.numeric(answer[,7])
+)
+
+# Create ggplot
+ggplot(data.above.15 , aes(x = p)) +
+  scale_y_continuous(limits=c(0,1))+
+  # Add points and lines for mr.abovewald.15
+  geom_point(aes(y = mr.above.wald.15), color = "red", pch = 16) +
+  geom_line(aes(y = mr.above.wald.15), color = "red") +
+  # Add points and lines for mr.above.adjwald.15
+  geom_point(aes(y = mr.above.adjwald.15), color = "blue", pch = 16) +
+  geom_line(aes(y = mr.above.adjwald.15), color = "blue") +
+  # Add points and lines for mr.above.exact.15
+  geom_point(aes(y = mr.above.exact.15), color = "green", pch = 16) +
+  geom_line(aes(y = mr.above.exact.15), color = "green") +
+  # Add points and lines for mr.above.score.15
+  geom_point(aes(y = mr.above.score.15), color = "orange", pch = 16) +
+  geom_line(aes(y = mr.above.score.15), color = "orange") +
+  # Add points and lines for bootstrap_quantile
+  geom_point(aes(y = bootstrap_quantile), color = "purple", pch = 16) +
+  geom_line(aes(y = bootstrap_quantile), color = "purple") +
+  # Add points and lines for bootstrap_T
+  geom_point(aes(y = bootstrap_T), color = "black", pch = 16) +
+  geom_line(aes(y = bootstrap_T), color = "black") +
+  
+  # Set x-axis and y-axis labels
+  xlab("p") + ylab("missing portion above CI") +
+  # Set plot title
+  labs(title = "missing portion above CI with n=15", caption = "Color note:\n wald = red, adjwald = blue, exact = green, score = orange, B_raw = purple, B_T = black")
+
+
+
+#method 5 and 6  (raw and T) at n = 100
+#```{r method five  at n eq 100, echo=FALSE}
+# Simulation setup
+N <- 1500
+B <- 200
+alpha <- 0.05
+p_values <- seq(0.01, 0.99, length.out = 30)
+
+#change the number of n here, can be 15,100, and 200
+n <-100
+
+answer<-matrix(nrow=length(p_values),ncol = 8)
+for (z in seq_along(p_values)){
+  r<-boot.CI(p_values[z],n,N,B)
+  answer[z,]<-r
+}
+
+
+
+######################
+#Graphs for n = 100
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p_values, answer[,1], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (raw) with n=100 ")
+
+# Connect the points with a line
+lines(p_values,answer[,1], col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing portion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, answer[,2], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (bootstrap quantile) with n=100 ")
+
+# Connect the points with a line
+lines(p, answer[,2], col = "gray")
+
+#--------------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, answer[,3], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (bootstrap quantile) with n=100 ")
+
+# Connect the points with a line
+lines(p, answer[,3], col = "gray")
+#----------------------------------
+#average length- range.bootstrap quantile.100
+
+# Create a scatter plot---------average length
+plot(p, answer[,4], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (bootstrap quantile) with n=100 ")
+
+# Connect the points with a line
+lines(p, answer[,4], col = "gray")
+#```
+
+
+
+#method 6 bootstrap T at n=100
+
+#Graphs for n = 100
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p_values, answer[,5], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (bootstrap T) with n=100 ")
+
+# Connect the points with a line
+lines(p_values,answer[,5], col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing portion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, answer[,6], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (bootstrap T) with n=100 ")
+
+# Connect the points with a line
+lines(p, answer[,6], col = "gray")
+
+#--------------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, answer[,7], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (bootstrap T) with n=100 ")
+
+# Connect the points with a line
+lines(p, answer[,7], col = "gray")
+#----------------------------------
+#average length- range.bootstrap T.100
+
+# Create a scatter plot---------average length
+plot(p, answer[,8], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (bootstrap T) with n=100 ")
+
+# Connect the points with a line
+lines(p, answer[,8], col = "gray")
+#```
+
+
+
+#Average CI Length with n=100
+# Combine data for plotting
+data.range.100 <- data.frame(
+  p = p,
+  ave.range.wald.100 = as.numeric(ave.range.wald.100),
+  ave.range.adjwald.100 = as.numeric(ave.range.adjwald.100),
+  ave.range.exact.100 = as.numeric(ave.range.exact.100),
+  ave.range.score.100 = as.numeric(ave.range.score.100),
+  bootstrap_quantile = as.numeric(answer[,4]),
+  bootstrap_T = as.numeric(answer[,8])
+)
+
+
+
+
+# Create ggplot
+ggplot(data.range.100, aes(x = p)) +
+  # Set y-axis limits
+  scale_y_continuous(limits=c(0,0.25))+
+  # Add points and lines for ave.range.wald.100
+  geom_point(aes(y = ave.range.wald.100), color = "red", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = ave.range.wald.100), color = "red") +
+  # Add points and lines for ave.range.adjwald.100
+  geom_point(aes(y = ave.range.adjwald.100), color = "blue", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = ave.range.adjwald.100), color = "blue") +
+  # Add points and lines for ave.range.exact.100
+  geom_point(aes(y = ave.range.exact.100), color = "green", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = ave.range.exact.100), color = "green") +
+  # Add points and lines for ave.range.score.100
+  geom_point(aes(y = ave.range.score.100), color = "orange", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = ave.range.score.100), color = "orange") +
+  # Add points and lines for bootstrap_quantile
+  geom_point(aes(y = bootstrap_quantile), color = "purple", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = bootstrap_quantile), color = "purple") +
+  # Add points and lines for bootstrap_T
+  geom_point(aes(y = bootstrap_T), color = "black", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = bootstrap_T), color = "black") +
+  
+  # Set x-axis and y-axis labels
+  xlab("p") + ylab("Average CI Range") +
+  # Set plot title
+  labs(title = "Average CI Length with n=100", caption = "Color note:\n wald = red, adjwald = blue, exact = green, score = orange, B_raw = purple, B_T = black")
+
+
+# Combine data-caprate for plotting
+data.caprate.100 <- data.frame(
+  p = p,
+  caprate.wald.ci.100 = as.numeric(caprate.wald.ci.100),
+  caprate.adjwald.ci.100 = as.numeric(caprate.adjwald.ci.100),
+  caprate.exact.ci.100 = as.numeric(caprate.exact.ci.100),
+  caprate.score.ci.100 = as.numeric(caprate.score.ci.100),
+  bootstrap_quantile = as.numeric(answer[,1]),
+  bootstrap_T = as.numeric(answer[,5])
+)
+
+# Create ggplot
+ggplot(data.caprate.100 , aes(x = p)) +
+  scale_y_continuous(limits=c(0.5,1))+
+  # Add points and lines for caprate.wald.100
+  geom_point(aes(y = caprate.wald.ci.100), color = "red", pch = 16) +
+  geom_line(aes(y = caprate.wald.ci.100), color = "red") +
+  # Add points and lines for caprate.adjwald.ci.100
+  geom_point(aes(y = caprate.adjwald.ci.100), color = "blue", pch = 16) +
+  geom_line(aes(y = caprate.adjwald.ci.100), color = "blue") +
+  # Add points and lines for caprate.exact.ci.100
+  geom_point(aes(y = caprate.exact.ci.100), color = "green", pch = 16) +
+  geom_line(aes(y = caprate.exact.ci.100), color = "green") +
+  # Add points and lines for caprate.score.ci.100
+  geom_point(aes(y = caprate.score.ci.100), color = "orange", pch = 16) +
+  geom_line(aes(y = caprate.score.ci.100), color = "orange") +
+  # Add points and lines for bootstrap_quantile
+  geom_point(aes(y = bootstrap_quantile), color = "purple", pch = 16) +
+  geom_line(aes(y = bootstrap_quantile), color = "purple") +
+  # Add points and lines for bootstrap_T
+  geom_point(aes(y = bootstrap_T), color = "black", pch = 16) +
+  geom_line(aes(y = bootstrap_T), color = "black") +
+  
+  # Set x-axis and y-axis labels
+  xlab("p") + ylab("capture rate") +
+  # Set plot title
+  labs(title = "capture rate comparison with n=100", caption = "Color note:\n wald = red, adjwald = blue, exact = green, score = orange, B_raw = purple, B_T = black")
+
+
+
+
+
+#missing portion below n = 100
+# Combine data missing portion below for plotting
+data.below.100 <- data.frame(
+  p = p,
+  mr.below.wald.100 = as.numeric(mr.below.wald.100),
+  mr.below.adjwald.100 = as.numeric(mr.below.adjwald.100),
+  mr.below.exact.100 = as.numeric(mr.below.exact.100),
+  mr.below.score.100 = as.numeric(mr.below.score.100),
+  bootstrap_quantile = as.numeric(answer[,2]),
+  bootstrap_T = as.numeric(answer[,6])
+)
+
+# Create ggplot
+ggplot(data.below.100 , aes(x = p)) +
+  scale_y_continuous(limits=c(0,0.5))+
+  # Add points and lines for mr.belowwald.100
+  geom_point(aes(y = mr.below.wald.100), color = "red", pch = 16) +
+  geom_line(aes(y = mr.below.wald.100), color = "red") +
+  # Add points and lines for mr.below.adjwald.100
+  geom_point(aes(y = mr.below.adjwald.100), color = "blue", pch = 16) +
+  geom_line(aes(y = mr.below.adjwald.100), color = "blue") +
+  # Add points and lines for mr.below.exact.100
+  geom_point(aes(y = mr.below.exact.100), color = "green", pch = 16) +
+  geom_line(aes(y = mr.below.exact.100), color = "green") +
+  # Add points and lines for mr.below.score.100
+  geom_point(aes(y = mr.below.score.100), color = "orange", pch = 16) +
+  geom_line(aes(y = mr.below.score.100), color = "orange") +
+  # Add points and lines for bootstrap_quantile
+  geom_point(aes(y = bootstrap_quantile), color = "purple", pch = 16) +
+  geom_line(aes(y = bootstrap_quantile), color = "purple") +
+  # Add points and lines for bootstrap_T
+  geom_point(aes(y = bootstrap_T), color = "black", pch = 16) +
+  geom_line(aes(y = bootstrap_T), color = "black") +
+  
+  # Set x-axis and y-axis labels
+  xlab("p") + ylab("missing portion below CI") +
+  # Set plot title
+  labs(title = "missing portion below CI with n=100", caption = "Color note:\n wald = red, adjwald = blue, exact = green, score = orange, B_raw = purple, B_T = black")
+
+
+
+#missing portion above n = 100
+# Combine data missing portion above for plotting
+data.above.100 <- data.frame(
+  p = p,
+  mr.above.wald.100 = as.numeric(mr.above.wald.100),
+  mr.above.adjwald.100 = as.numeric(mr.above.adjwald.100),
+  mr.above.exact.100 = as.numeric(mr.above.exact.100),
+  mr.above.score.100 = as.numeric(mr.above.score.100),
+  bootstrap_quantile = as.numeric(answer[,3]),
+  bootstrap_T = as.numeric(answer[,7])
+)
+
+# Create ggplot
+ggplot(data.above.100 , aes(x = p)) +
+  scale_y_continuous(limits=c(0,0.5))+
+  # Add points and lines for mr.abovewald.100
+  geom_point(aes(y = mr.above.wald.100), color = "red", pch = 16) +
+  geom_line(aes(y = mr.above.wald.100), color = "red") +
+  # Add points and lines for mr.above.adjwald.100
+  geom_point(aes(y = mr.above.adjwald.100), color = "blue", pch = 16) +
+  geom_line(aes(y = mr.above.adjwald.100), color = "blue") +
+  # Add points and lines for mr.above.exact.100
+  geom_point(aes(y = mr.above.exact.100), color = "green", pch = 16) +
+  geom_line(aes(y = mr.above.exact.100), color = "green") +
+  # Add points and lines for mr.above.score.100
+  geom_point(aes(y = mr.above.score.100), color = "orange", pch = 16) +
+  geom_line(aes(y = mr.above.score.100), color = "orange") +
+  # Add points and lines for bootstrap_quantile
+  geom_point(aes(y = bootstrap_quantile), color = "purple", pch = 16) +
+  geom_line(aes(y = bootstrap_quantile), color = "purple") +
+  # Add points and lines for bootstrap_T
+  geom_point(aes(y = bootstrap_T), color = "black", pch = 16) +
+  geom_line(aes(y = bootstrap_T), color = "black") +
+  
+  # Set x-axis and y-axis labels
+  xlab("p") + ylab("missing portion above CI") +
+  # Set plot title
+  labs(title = "missing portion above CI with n=100", caption = "Color note:\n wald = red, adjwald = blue, exact = green, score = orange, B_raw = purple, B_T = black")
+
+
+
+
+
+
+
+#method 5 and 6  (raw and T) at n = 200
+#```{r method five at n eq 200, echo=FALSE}
+# Simulation setup
+N <- 1500
+B <- 200
+alpha <- 0.05
+p_values <- seq(0.01, 0.99, length.out = 30)
+
+#change the number of n here, can be 15,100, and 200
+n <-200
+
+answer<-matrix(nrow=length(p_values),ncol = 8)
+for (z in seq_along(p_values)){
+  r<-boot.CI(p_values[z],n,N,B)
+  answer[z,]<-r
+}
+
+
+
+
+######################
+#Graphs for BootStrap raw n = 200
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p_values, answer[,1], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (raw) with n=200 ")
+
+# Connect the points with a line
+lines(p_values,answer[,1], col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing portion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, answer[,2], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (bootstrap quantile) with n=200 ")
+
+# Connect the points with a line
+lines(p, answer[,2], col = "gray")
+
+#--------------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, answer[,3], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (bootstrap quantile) with n=200 ")
+
+# Connect the points with a line
+lines(p, answer[,3], col = "gray")
+#----------------------------------
+#average length- range.bootstrap quantile.200
+
+# Create a scatter plot---------average length
+plot(p, answer[,4], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (bootstrap quantile) with n=200 ")
+
+# Connect the points with a line
+lines(p, answer[,4], col = "gray")
+#```
+
+
+######################
+#Graphs for BootStrap T n = 200
+#------------------------------------------------------------------------------
+# Create a scatter plot - CAPTURED
+plot(p_values, answer[,5], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "Proportion", main = "Proportion of CI containing p (Bootstrp T) with n=200 ")
+
+# Connect the points with a line
+lines(p_values,answer[,5], col = "gray")
+abline(h = 0.9, col = "blue")
+#-------------------------------------------------------------------------------
+
+#missing portion above and below
+#------------------------------------------------------------------------------
+# Create a scatter plot --------below
+plot(p, answer[,6], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-below Proportion", main = "Proportion of CI missing low p (bootstrap T) with n=200 ")
+
+# Connect the points with a line
+lines(p, answer[,6], col = "gray")
+
+#--------------------------------------------------------------------------------
+# Create a scatter plot---------above
+plot(p, answer[,7], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "miss-above Proportion", main = "Proportion of CI missing high p (bootstrap T) with n=200 ")
+
+# Connect the points with a line
+lines(p, answer[,7], col = "gray")
+#----------------------------------
+#average length- range.bootstrap T.200
+
+# Create a scatter plot---------average length
+plot(p, answer[,8], pch = 16, ylim = c(0, 1),xlab = "p", ylab = "average CI range", main = "average CI range a=0.05 (bootstrap T) with n=200 ")
+
+# Connect the points with a line
+lines(p, answer[,8], col = "gray")
+#```
+
+
+
+
+#Average CI Length with n=200
+# Combine data for plotting
+data.range.200 <- data.frame(
+  p = p,
+  ave.range.wald.200 = as.numeric(ave.range.wald.200),
+  ave.range.adjwald.200 = as.numeric(ave.range.adjwald.200),
+  ave.range.exact.200 = as.numeric(ave.range.exact.200),
+  ave.range.score.200 = as.numeric(ave.range.score.200),
+  bootstrap_quantile = as.numeric(answer[,4]),
+  bootstrap_T = as.numeric(answer[,8])
+)
+
+
+
+
+# Create ggplot
+ggplot(data.range.200, aes(x = p)) +
+  # Set y-axis limits
+  scale_y_continuous(limits=c(0,0.2))+
+  # Add points and lines for ave.range.wald.200
+  geom_point(aes(y = ave.range.wald.200), color = "red", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = ave.range.wald.200), color = "red") +
+  # Add points and lines for ave.range.adjwald.200
+  geom_point(aes(y = ave.range.adjwald.200), color = "blue", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = ave.range.adjwald.200), color = "blue") +
+  # Add points and lines for ave.range.exact.200
+  geom_point(aes(y = ave.range.exact.200), color = "green", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = ave.range.exact.200), color = "green") +
+  # Add points and lines for ave.range.score.200
+  geom_point(aes(y = ave.range.score.200), color = "orange", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = ave.range.score.200), color = "orange") +
+  # Add points and lines for bootstrap_quantile
+  geom_point(aes(y = bootstrap_quantile), color = "purple", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = bootstrap_quantile), color = "purple") +
+  # Add points and lines for bootstrap_T
+  geom_point(aes(y = bootstrap_T), color = "black", pch = 16) +
+  geom_smooth(se=FALSE,aes(y = bootstrap_T), color = "black") +
+  
+  # Set x-axis and y-axis labels
+  xlab("p") + ylab("Average CI Range") +
+  # Set plot title
+  labs(title = "Average CI Length with n=200", caption = "Color note:\n wald = red, adjwald = blue, exact = green, score = orange, B_raw = purple, B_T = black")
+
+
+# Combine data-caprate for plotting
+data.caprate.200 <- data.frame(
+  p = p,
+  caprate.wald.ci.200 = as.numeric(caprate.wald.ci.200),
+  caprate.adjwald.ci.200 = as.numeric(caprate.adjwald.ci.200),
+  caprate.exact.ci.200 = as.numeric(caprate.exact.ci.200),
+  caprate.score.ci.200 = as.numeric(caprate.score.ci.200),
+  bootstrap_quantile = as.numeric(answer[,1]),
+  bootstrap_T = as.numeric(answer[,5])
+)
+
+# Create ggplot
+ggplot(data.caprate.200 , aes(x = p)) +
+  scale_y_continuous(limits=c(0.5,1))+
+  # Add points and lines for caprate.wald.200
+  geom_point(aes(y = caprate.wald.ci.200), color = "red", pch = 16) +
+  geom_line(aes(y = caprate.wald.ci.200), color = "red") +
+  # Add points and lines for caprate.adjwald.ci.200
+  geom_point(aes(y = caprate.adjwald.ci.200), color = "blue", pch = 16) +
+  geom_line(aes(y = caprate.adjwald.ci.200), color = "blue") +
+  # Add points and lines for caprate.exact.ci.200
+  geom_point(aes(y = caprate.exact.ci.200), color = "green", pch = 16) +
+  geom_line(aes(y = caprate.exact.ci.200), color = "green") +
+  # Add points and lines for caprate.score.ci.200
+  geom_point(aes(y = caprate.score.ci.200), color = "orange", pch = 16) +
+  geom_line(aes(y = caprate.score.ci.200), color = "orange") +
+  # Add points and lines for bootstrap_quantile
+  geom_point(aes(y = bootstrap_quantile), color = "purple", pch = 16) +
+  geom_line(aes(y = bootstrap_quantile), color = "purple") +
+  # Add points and lines for bootstrap_T
+  geom_point(aes(y = bootstrap_T), color = "black", pch = 16) +
+  geom_line(aes(y = bootstrap_T), color = "black") +
+  
+  # Set x-axis and y-axis labels
+  xlab("p") + ylab("capture rate") +
+  # Set plot title
+  labs(title = "capture rate comparison with n=200", caption = "Color note:\n wald = red, adjwald = blue, exact = green, score = orange, B_raw = purple, B_T = black")
+
+
+
+
+
+#missing portion below n = 200
+# Combine data missing portion below for plotting
+data.below.200 <- data.frame(
+  p = p,
+  mr.below.wald.200 = as.numeric(mr.below.wald.200),
+  mr.below.adjwald.200 = as.numeric(mr.below.adjwald.200),
+  mr.below.exact.200 = as.numeric(mr.below.exact.200),
+  mr.below.score.200 = as.numeric(mr.below.score.200),
+  bootstrap_quantile = as.numeric(answer[,2]),
+  bootstrap_T = as.numeric(answer[,6])
+)
+
+# Create ggplot
+ggplot(data.below.200 , aes(x = p)) +
+  scale_y_continuous(limits=c(0,0.2))+
+  # Add points and lines for mr.belowwald.200
+  geom_point(aes(y = mr.below.wald.200), color = "red", pch = 16) +
+  geom_line(aes(y = mr.below.wald.200), color = "red") +
+  # Add points and lines for mr.below.adjwald.200
+  geom_point(aes(y = mr.below.adjwald.200), color = "blue", pch = 16) +
+  geom_line(aes(y = mr.below.adjwald.200), color = "blue") +
+  # Add points and lines for mr.below.exact.200
+  geom_point(aes(y = mr.below.exact.200), color = "green", pch = 16) +
+  geom_line(aes(y = mr.below.exact.200), color = "green") +
+  # Add points and lines for mr.below.score.200
+  geom_point(aes(y = mr.below.score.200), color = "orange", pch = 16) +
+  geom_line(aes(y = mr.below.score.200), color = "orange") +
+  # Add points and lines for bootstrap_quantile
+  geom_point(aes(y = bootstrap_quantile), color = "purple", pch = 16) +
+  geom_line(aes(y = bootstrap_quantile), color = "purple") +
+  # Add points and lines for bootstrap_T
+  geom_point(aes(y = bootstrap_T), color = "black", pch = 16) +
+  geom_line(aes(y = bootstrap_T), color = "black") +
+  
+  # Set x-axis and y-axis labels
+  xlab("p") + ylab("missing portion below CI") +
+  # Set plot title
+  labs(title = "missing portion below CI with n=200", caption = "Color note:\n wald = red, adjwald = blue, exact = green, score = orange, B_raw = purple, B_T = black")
+
+
+
+#missing portion above n = 200
+# Combine data missing portion above for plotting
+data.above.200 <- data.frame(
+  p = p,
+  mr.above.wald.200 = as.numeric(mr.above.wald.200),
+  mr.above.adjwald.200 = as.numeric(mr.above.adjwald.200),
+  mr.above.exact.200 = as.numeric(mr.above.exact.200),
+  mr.above.score.200 = as.numeric(mr.above.score.200),
+  bootstrap_quantile = as.numeric(answer[,3]),
+  bootstrap_T = as.numeric(answer[,7])
+)
+
+# Create ggplot
+ggplot(data.above.200 , aes(x = p)) +
+  scale_y_continuous(limits=c(0,0.2))+
+  # Add points and lines for mr.abovewald.200
+  geom_point(aes(y = mr.above.wald.200), color = "red", pch = 16) +
+  geom_line(aes(y = mr.above.wald.200), color = "red") +
+  # Add points and lines for mr.above.adjwald.200
+  geom_point(aes(y = mr.above.adjwald.200), color = "blue", pch = 16) +
+  geom_line(aes(y = mr.above.adjwald.200), color = "blue") +
+  # Add points and lines for mr.above.exact.200
+  geom_point(aes(y = mr.above.exact.200), color = "green", pch = 16) +
+  geom_line(aes(y = mr.above.exact.200), color = "green") +
+  # Add points and lines for mr.above.score.200
+  geom_point(aes(y = mr.above.score.200), color = "orange", pch = 16) +
+  geom_line(aes(y = mr.above.score.200), color = "orange") +
+  # Add points and lines for bootstrap_quantile
+  geom_point(aes(y = bootstrap_quantile), color = "purple", pch = 16) +
+  geom_line(aes(y = bootstrap_quantile), color = "purple") +
+  # Add points and lines for bootstrap_T
+  geom_point(aes(y = bootstrap_T), color = "black", pch = 16) +
+  geom_line(aes(y = bootstrap_T), color = "black") +
+  
+  # Set x-axis and y-axis labels
+  xlab("p") + ylab("missing portion above CI") +
+  # Set plot title
+  labs(title = "missing portion above CI with n=200", caption = "Color note:\n wald = red, adjwald = blue, exact = green, score = orange, B_raw = purple, B_T = black")
