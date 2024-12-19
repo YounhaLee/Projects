@@ -5,7 +5,7 @@ A Multivariate Analysis of Breast Cancer Diagnoses
 
 Comparison of Methods for Interval Estimation of Binomial Proportions
 
-Exploration of McNemar's Test and Pearson's Chi-Square
+Exploration of McNemar's Test
 
 The Relationship Between PSTM and L2 Pronunciation in Advanced Learners Depends on Phonological Structure
 
