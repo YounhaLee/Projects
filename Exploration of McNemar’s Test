@@ -1,0 +1,600 @@
+################################################;
+#Author: Younha Lee                                                                                 ;                                                                       ;
+#Program Purpose: ST502-002 Final Project  ;
+#Date: 4/29/2024                                                                                    ;
+################################################;
+
+####################################################
+#Analysis of the Dataset
+####################################################
+set.seed(1234)
+# Observed data
+observed_data <- matrix(c(85, 15, 40, 110), nrow = 2, byrow = TRUE)
+
+# McNemar's test
+mcnemar_result <- mcnemar.test(observed_data, correct = FALSE)
+mcnemar_result
+
+# Extract test statistic
+test_statistic <- mcnemar_result$statistic
+
+# Calculate p-value
+p_value <- mcnemar_result$p.value
+
+# Determine rejection region (assuming significance level alpha = 0.05)
+rejection_region <- ifelse(p_value < 0.05, "Reject H0", "Fail to reject H0")
+
+# Print results
+cat("Test Statistic:", test_statistic, "\n")
+cat("P-value:", p_value, "\n")
+cat("Rejection Region:", rejection_region, "\n")
+####################################################################
+
+
+
+
+###################################################################
+#Simulation Study
+###################################################################
+# Load required library
+library(MultiRNG)
+
+# Define function to conduct Person chi-square test
+PersonChi_test <- function(sample_size, pi1, pi2, correlation) {
+  # Generate correlated binary data
+  correlated_data <- draw.correlated.binary(no.row = sample_size, d = 2, prop.vec = c(pi1, pi2), corr.mat = matrix(c(1, correlation, correlation, 1), nrow = 2, byrow = TRUE))
+  
+  # Calculate Pearson's Chi-Square test statistic
+  n_12 <- sum(correlated_data[,1] == 1 & correlated_data[,2] == 0)
+  n_21 <- sum(correlated_data[,1] == 0 & correlated_data[,2] == 1)
+  test_statistic <- (n_12 - n_21)^2 / (n_12 + n_21)
+  
+  # Determine rejection region
+  result <- (test_statistic >= qchisq(1 - alpha, df = 1))
+  
+  # Return TRUE if reject H0, FALSE otherwise
+  return(result)
+}
+###############################################################
+###############################################################
+
+#######################################################################################################
+#pi1=0.1
+#######################################################################################################
+# Step 1: Define Parameters
+sample_sizes <- c(25, 40, 80, 200)  # Sample sizes
+pi1 <- 0.1  # Success probability for Drug A
+pi2_values <- c(0, 0.02, 0.05, 0.1) + pi1  # Success probabilities for Drug B
+correlations <- c(0, 0.2, 0.5)  # Correlations
+alpha <- 0.05  # Significance level
+N <- 1000  # Number of replicates
+
+# Initialize a list to store results for each correlation
+results0.1 <- list()
+
+# Step 2: Simulate Data and Perform Tests
+for (rho_index in seq_along(correlations)) {
+  # Initialize a matrix to store results for the current correlation
+  proportion_rejected <- matrix(NA, nrow = length(sample_sizes), ncol = length(pi2_values), dimnames = list(sample_sizes, pi2_values - pi1))
+  
+  for (n_index in seq_along(sample_sizes)) {
+    for (pi2_index in seq_along(pi2_values)) {
+      # Perform McNemar's test and store the result
+      pr <- round(mean(replicate(N, PersonChi_test(sample_sizes[n_index], pi1, pi2_values[pi2_index], correlations[rho_index])), na.rm=TRUE), 3)
+      
+      # Store the result in the matrix
+      proportion_rejected[n_index, pi2_index] <- pr
+    }
+  }
+  # Store the results for the current correlation
+  results0.1[[paste("correlation: ", correlations[rho_index], sep = "")]] <- proportion_rejected
+}
+
+# View the results
+results0.1
+############################################################################
+
+############################################################################
+# Extract the results for sample size 25
+results0.1_c0 <- results0.1[[paste("correlation: ", 0, sep = "")]][1, ]
+results0.1_c0.2 <- results0.1[[paste("correlation: ", 0.2, sep = "")]][1, ]
+results0.1_c0.5 <- results0.1[[paste("correlation: ", 0.5, sep = "")]][1, ]
+
+# Create a data frame for plotting
+df <- data.frame(
+  Pi_Difference = pi2_values - pi1,
+  Proportion_Rejected_0 = results0.1_c0,
+  Proportion_Rejected_0.2 = results0.1_c0.2,
+  Proportion_Rejected_0.5 = results0.1_c0.5
+)
+
+# Plot
+library(ggplot2)
+ggplot(df, aes(x = Pi_Difference)) +
+  geom_line(aes(y = Proportion_Rejected_0, color = "0"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.2, color = "0.2"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.5, color = "0.5"), linewidth = 1) +
+  geom_hline(yintercept = alpha, color = "black", linewidth = 1) +
+  labs(
+    title = "Proportion Rejected\nfor Sample Size 25\nand pi1 = 0.1",
+    x = "pi2 - pi1",
+    y = "Proportion Rejected"
+  ) +
+  coord_cartesian(ylim = c(0, 1.0), xlim = c(0, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25)) +
+  scale_color_manual(
+    name = "Correlation",
+    values = c("0" = "red", "0.2" = "green", "0.5" = "blue")
+  ) +
+  theme(
+    legend.position = "right"
+  )
+
+################################################################
+# Extract the results for sample size 40
+results0.1_c0 <- results0.1[[paste("correlation: ", 0, sep = "")]][2, ]
+results0.1_c0.2 <- results0.1[[paste("correlation: ", 0.2, sep = "")]][2, ]
+results0.1_c0.5 <- results0.1[[paste("correlation: ", 0.5, sep = "")]][2, ]
+
+# Create a data frame for plotting
+df <- data.frame(
+  Pi_Difference = pi2_values - pi1,
+  Proportion_Rejected_0 = results0.1_c0,
+  Proportion_Rejected_0.2 = results0.1_c0.2,
+  Proportion_Rejected_0.5 = results0.1_c0.5
+)
+
+# Plot
+library(ggplot2)
+ggplot(df, aes(x = Pi_Difference)) +
+  geom_line(aes(y = Proportion_Rejected_0, color = "0"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.2, color = "0.2"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.5, color = "0.5"), linewidth = 1) +
+  geom_hline(yintercept = alpha, color = "black", linewidth = 1) +
+  labs(
+    title = "Proportion Rejected\nfor Sample Size 40\nand pi1 = 0.1",
+    x = "pi2 - pi1",
+    y = "Proportion Rejected"
+  ) +
+  coord_cartesian(ylim = c(0, 1.0), xlim = c(0, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25)) +
+  scale_color_manual(
+    name = "Correlation",
+    values = c("0" = "red", "0.2" = "green", "0.5" = "blue")
+  ) +
+  theme(
+    legend.position = "right"
+  )
+
+##############################################################################
+# Extract the results for sample size 80
+results0.1_c0 <- results0.1[[paste("correlation: ", 0, sep = "")]][3, ]
+results0.1_c0.2 <- results0.1[[paste("correlation: ", 0.2, sep = "")]][3, ]
+results0.1_c0.5 <- results0.1[[paste("correlation: ", 0.5, sep = "")]][3, ]
+
+# Create a data frame for plotting
+df <- data.frame(
+  Pi_Difference = pi2_values - pi1,
+  Proportion_Rejected_0 = results0.1_c0,
+  Proportion_Rejected_0.2 = results0.1_c0.2,
+  Proportion_Rejected_0.5 = results0.1_c0.5
+)
+
+# Plot
+library(ggplot2)
+ggplot(df, aes(x = Pi_Difference)) +
+  geom_line(aes(y = Proportion_Rejected_0, color = "0"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.2, color = "0.2"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.5, color = "0.5"), linewidth = 1) +
+  geom_hline(yintercept = alpha, color = "black", linewidth = 1) +
+  labs(
+    title = "Proportion Rejected\nfor Sample Size 80\nand pi1 = 0.1",
+    x = "pi2 - pi1",
+    y = "Proportion Rejected"
+  ) +
+  coord_cartesian(ylim = c(0, 1.0), xlim = c(0, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25)) +
+  scale_color_manual(
+    name = "Correlation",
+    values = c("0" = "red", "0.2" = "green", "0.5" = "blue")
+  ) +
+  theme(
+    legend.position = "right"
+  )
+
+############################################################################
+# Extract the results for sample size 200
+results0.1_c0 <- results0.1[[paste("correlation: ", 0, sep = "")]][4, ]
+results0.1_c0.2 <- results0.1[[paste("correlation: ", 0.2, sep = "")]][4, ]
+results0.1_c0.5 <- results0.1[[paste("correlation: ", 0.5, sep = "")]][4, ]
+
+# Create a data frame for plotting
+df <- data.frame(
+  Pi_Difference = pi2_values - pi1,
+  Proportion_Rejected_0 = results0.1_c0,
+  Proportion_Rejected_0.2 = results0.1_c0.2,
+  Proportion_Rejected_0.5 = results0.1_c0.5
+)
+
+# Plot
+library(ggplot2)
+ggplot(df, aes(x = Pi_Difference)) +
+  geom_line(aes(y = Proportion_Rejected_0, color = "0"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.2, color = "0.2"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.5, color = "0.5"), linewidth = 1) +
+  geom_hline(yintercept = alpha, color = "black", linewidth = 1) +
+  labs(
+    title = "Proportion Rejected\nfor Sample Size 200\nand pi1 = 0.1",
+    x = "pi2 - pi1",
+    y = "Proportion Rejected"
+  ) +
+  coord_cartesian(ylim = c(0, 1.0), xlim = c(0, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25)) +
+  scale_color_manual(
+    name = "Correlation",
+    values = c("0" = "red", "0.2" = "green", "0.5" = "blue")
+  ) +
+  theme(
+    legend.position = "right"
+  )
+
+
+#######################################################################################################
+#pi1=0.4
+#######################################################################################################
+# Step 1: Define Parameters
+sample_sizes <- c(25, 40, 80, 200)  # Sample sizes
+pi1 <- 0.4  # Success probability for Drug A
+pi2_values <- c(0, 0.02, 0.05, 0.1) + pi1  # Success probabilities for Drug B
+correlations <- c(0, 0.2, 0.5)  # Correlations
+alpha <- 0.05  # Significance level
+N <- 1000  # Number of replicates
+
+# Initialize a list to store results for each correlation
+results0.4 <- list()
+
+# Step 2: Simulate Data and Perform Tests
+for (rho_index in seq_along(correlations)) {
+  # Initialize a matrix to store results for the current correlation
+  proportion_rejected <- matrix(NA, nrow = length(sample_sizes), ncol = length(pi2_values), dimnames = list(sample_sizes, pi2_values - pi1))
+  
+  for (n_index in seq_along(sample_sizes)) {
+    for (pi2_index in seq_along(pi2_values)) {
+      # Perform McNemar's test and store the result
+      pr <- round(mean(replicate(N, PersonChi_test(sample_sizes[n_index], pi1, pi2_values[pi2_index], correlations[rho_index])), na.rm=TRUE), 3)
+      
+      # Store the result in the matrix
+      proportion_rejected[n_index, pi2_index] <- pr
+    }
+  }
+  # Store the results for the current correlation
+  results0.4[[paste("correlation: ", correlations[rho_index], sep = "")]] <- proportion_rejected
+}
+
+# View the results
+results0.4
+
+############################################################################
+# Extract the results for sample size 25
+results0.4_c0 <- results0.4[[paste("correlation: ", 0, sep = "")]][1, ]
+results0.4_c0.2 <- results0.4[[paste("correlation: ", 0.2, sep = "")]][1, ]
+results0.4_c0.5 <- results0.4[[paste("correlation: ", 0.5, sep = "")]][1, ]
+
+# Create a data frame for plotting
+df <- data.frame(
+  Pi_Difference = pi2_values - pi1,
+  Proportion_Rejected_0 = results0.4_c0,
+  Proportion_Rejected_0.2 = results0.4_c0.2,
+  Proportion_Rejected_0.5 = results0.4_c0.5
+)
+
+# Plot
+library(ggplot2)
+ggplot(df, aes(x = Pi_Difference)) +
+  geom_line(aes(y = Proportion_Rejected_0, color = "0"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.2, color = "0.2"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.5, color = "0.5"), linewidth = 1) +
+  geom_hline(yintercept = alpha, color = "black", linewidth = 1) +
+  labs(
+    title = "Proportion Rejected\nfor Sample Size 25\nand pi1 = 0.4",
+    x = "pi2 - pi1",
+    y = "Proportion Rejected"
+  ) +
+  coord_cartesian(ylim = c(0, 0.8), xlim = c(0, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.2)) +
+  scale_color_manual(
+    name = "Correlation",
+    values = c("0" = "red", "0.2" = "green", "0.5" = "blue")
+  ) +
+  theme(
+    legend.position = "right"
+  )
+
+################################################################
+# Extract the results for sample size 40
+results0.4_c0 <- results0.4[[paste("correlation: ", 0, sep = "")]][2, ]
+results0.4_c0.2 <- results0.4[[paste("correlation: ", 0.2, sep = "")]][2, ]
+results0.4_c0.5 <- results0.4[[paste("correlation: ", 0.5, sep = "")]][2, ]
+
+# Create a data frame for plotting
+df <- data.frame(
+  Pi_Difference = pi2_values - pi1,
+  Proportion_Rejected_0 = results0.4_c0,
+  Proportion_Rejected_0.2 = results0.4_c0.2,
+  Proportion_Rejected_0.5 = results0.4_c0.5
+)
+
+# Plot
+library(ggplot2)
+ggplot(df, aes(x = Pi_Difference)) +
+  geom_line(aes(y = Proportion_Rejected_0, color = "0"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.2, color = "0.2"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.5, color = "0.5"), linewidth = 1) +
+  geom_hline(yintercept = alpha, color = "black", linewidth = 1) +
+  labs(
+    title = "Proportion Rejected\nfor Sample Size 40\nand pi1 = 0.4",
+    x = "pi2 - pi1",
+    y = "Proportion Rejected"
+  ) +
+  coord_cartesian(ylim = c(0, 0.8), xlim = c(0, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.2)) +
+  scale_color_manual(
+    name = "Correlation",
+    values = c("0" = "red", "0.2" = "green", "0.5" = "blue")
+  ) +
+  theme(
+    legend.position = "right"
+  )
+
+##############################################################################
+# Extract the results for sample size 80
+results0.4_c0 <- results0.4[[paste("correlation: ", 0, sep = "")]][3, ]
+results0.4_c0.2 <- results0.4[[paste("correlation: ", 0.2, sep = "")]][3, ]
+results0.4_c0.5 <- results0.4[[paste("correlation: ", 0.5, sep = "")]][3, ]
+
+# Create a data frame for plotting
+df <- data.frame(
+  Pi_Difference = pi2_values - pi1,
+  Proportion_Rejected_0 = results0.4_c0,
+  Proportion_Rejected_0.2 = results0.4_c0.2,
+  Proportion_Rejected_0.5 = results0.4_c0.5
+)
+
+# Plot
+library(ggplot2)
+ggplot(df, aes(x = Pi_Difference)) +
+  geom_line(aes(y = Proportion_Rejected_0, color = "0"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.2, color = "0.2"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.5, color = "0.5"), linewidth = 1) +
+  geom_hline(yintercept = alpha, color = "black", linewidth = 1) +
+  labs(
+    title = "Proportion Rejected\nfor Sample Size 80\nand pi1 = 0.4",
+    x = "pi2 - pi1",
+    y = "Proportion Rejected"
+  ) +
+  coord_cartesian(ylim = c(0, 0.8), xlim = c(0, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.2)) +
+  scale_color_manual(
+    name = "Correlation",
+    values = c("0" = "red", "0.2" = "green", "0.5" = "blue")
+  ) +
+  theme(
+    legend.position = "right"
+  )
+
+############################################################################
+# Extract the results for sample size 200
+results0.4_c0 <- results0.4[[paste("correlation: ", 0, sep = "")]][4, ]
+results0.4_c0.2 <- results0.4[[paste("correlation: ", 0.2, sep = "")]][4, ]
+results0.4_c0.5 <- results0.4[[paste("correlation: ", 0.5, sep = "")]][4, ]
+
+# Create a data frame for plotting
+df <- data.frame(
+  Pi_Difference = pi2_values - pi1,
+  Proportion_Rejected_0 = results0.4_c0,
+  Proportion_Rejected_0.2 = results0.4_c0.2,
+  Proportion_Rejected_0.5 = results0.4_c0.5
+)
+
+# Plot
+library(ggplot2)
+ggplot(df, aes(x = Pi_Difference)) +
+  geom_line(aes(y = Proportion_Rejected_0, color = "0"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.2, color = "0.2"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.5, color = "0.5"), linewidth = 1) +
+  geom_hline(yintercept = alpha, color = "black", linewidth = 1) +
+  labs(
+    title = "Proportion Rejected\nfor Sample Size 200\nand pi1 = 0.4",
+    x = "pi2 - pi1",
+    y = "Proportion Rejected"
+  ) +
+  coord_cartesian(ylim = c(0, 0.8), xlim = c(0, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.2)) +
+  scale_color_manual(
+    name = "Correlation",
+    values = c("0" = "red", "0.2" = "green", "0.5" = "blue")
+  ) +
+  theme(
+    legend.position = "right"
+  )
+
+
+#######################################################################################################
+#pi1=0.8
+#######################################################################################################
+# Step 1: Define Parameters
+sample_sizes <- c(25, 40, 80, 200)  # Sample sizes
+pi1 <- 0.8  # Success probability for Drug A
+pi2_values <- c(0, 0.02, 0.05, 0.1) + pi1  # Success probabilities for Drug B
+correlations <- c(0, 0.2, 0.5)  # Correlations
+alpha <- 0.05  # Significance level
+N <- 1000  # Number of replicates
+
+# Initialize a list to store results for each correlation
+results0.8 <- list()
+
+# Step 2: Simulate Data and Perform Tests
+for (rho_index in seq_along(correlations)) {
+  # Initialize a matrix to store results for the current correlation
+  proportion_rejected <- matrix(NA, nrow = length(sample_sizes), ncol = length(pi2_values), dimnames = list(sample_sizes, pi2_values - pi1))
+  
+  for (n_index in seq_along(sample_sizes)) {
+    for (pi2_index in seq_along(pi2_values)) {
+      # Perform McNemar's test and store the result
+      pr <- round(mean(replicate(N, PersonChi_test(sample_sizes[n_index], pi1, pi2_values[pi2_index], correlations[rho_index])), na.rm=TRUE), 3)
+      
+      # Store the result in the matrix
+      proportion_rejected[n_index, pi2_index] <- pr
+    }
+  }
+  # Store the results for the current correlation
+  results0.8[[paste("correlation: ", correlations[rho_index], sep = "")]] <- proportion_rejected
+}
+
+# View the results
+results0.8
+
+############################################################################
+# Extract the results for sample size 25
+results0.8_c0 <- results0.8[[paste("correlation: ", 0, sep = "")]][1, ]
+results0.8_c0.2 <- results0.8[[paste("correlation: ", 0.2, sep = "")]][1, ]
+results0.8_c0.5 <- results0.8[[paste("correlation: ", 0.5, sep = "")]][1, ]
+
+# Create a data frame for plotting
+df <- data.frame(
+  Pi_Difference = pi2_values - pi1,
+  Proportion_Rejected_0 = results0.8_c0,
+  Proportion_Rejected_0.2 = results0.8_c0.2,
+  Proportion_Rejected_0.5 = results0.8_c0.5
+)
+
+# Plot
+library(ggplot2)
+ggplot(df, aes(x = Pi_Difference)) +
+  geom_line(aes(y = Proportion_Rejected_0, color = "0"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.2, color = "0.2"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.5, color = "0.5"), linewidth = 1) +
+  geom_hline(yintercept = alpha, color = "black", linewidth = 1) +
+  labs(
+    title = "Proportion Rejected\nfor Sample Size 25\nand pi1 = 0.8",
+    x = "pi2 - pi1",
+    y = "Proportion Rejected"
+  ) +
+  coord_cartesian(ylim = c(0, 1.0), xlim = c(0, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25)) +
+  scale_color_manual(
+    name = "Correlation",
+    values = c("0" = "red", "0.2" = "green", "0.5" = "blue")
+  ) +
+  theme(
+    legend.position = "right"
+  )
+
+################################################################
+# Extract the results for sample size 40
+results0.8_c0 <- results0.8[[paste("correlation: ", 0, sep = "")]][2, ]
+results0.8_c0.2 <- results0.8[[paste("correlation: ", 0.2, sep = "")]][2, ]
+results0.8_c0.5 <- results0.8[[paste("correlation: ", 0.5, sep = "")]][2, ]
+
+# Create a data frame for plotting
+df <- data.frame(
+  Pi_Difference = pi2_values - pi1,
+  Proportion_Rejected_0 = results0.8_c0,
+  Proportion_Rejected_0.2 = results0.8_c0.2,
+  Proportion_Rejected_0.5 = results0.8_c0.5
+)
+
+# Plot
+library(ggplot2)
+ggplot(df, aes(x = Pi_Difference)) +
+  geom_line(aes(y = Proportion_Rejected_0, color = "0"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.2, color = "0.2"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.5, color = "0.5"), linewidth = 1) +
+  geom_hline(yintercept = alpha, color = "black", linewidth = 1) +
+  labs(
+    title = "Proportion Rejected\nfor Sample Size 40\nand pi1 = 0.8",
+    x = "pi2 - pi1",
+    y = "Proportion Rejected"
+  ) +
+  coord_cartesian(ylim = c(0, 1.0), xlim = c(0, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25)) +
+  scale_color_manual(
+    name = "Correlation",
+    values = c("0" = "red", "0.2" = "green", "0.5" = "blue")
+  ) +
+  theme(
+    legend.position = "right"
+  )
+
+##############################################################################
+# Extract the results for sample size 80
+results0.8_c0 <- results0.8[[paste("correlation: ", 0, sep = "")]][3, ]
+results0.8_c0.2 <- results0.8[[paste("correlation: ", 0.2, sep = "")]][3, ]
+results0.8_c0.5 <- results0.8[[paste("correlation: ", 0.5, sep = "")]][3, ]
+
+# Create a data frame for plotting
+df <- data.frame(
+  Pi_Difference = pi2_values - pi1,
+  Proportion_Rejected_0 = results0.8_c0,
+  Proportion_Rejected_0.2 = results0.8_c0.2,
+  Proportion_Rejected_0.5 = results0.8_c0.5
+)
+
+# Plot
+library(ggplot2)
+ggplot(df, aes(x = Pi_Difference)) +
+  geom_line(aes(y = Proportion_Rejected_0, color = "0"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.2, color = "0.2"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.5, color = "0.5"), linewidth = 1) +
+  geom_hline(yintercept = alpha, color = "black", linewidth = 1) +
+  labs(
+    title = "Proportion Rejected\nfor Sample Size 80\nand pi1 = 0.8",
+    x = "pi2 - pi1",
+    y = "Proportion Rejected"
+  ) +
+  coord_cartesian(ylim = c(0, 1.0), xlim = c(0, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25)) +
+  scale_color_manual(
+    name = "Correlation",
+    values = c("0" = "red", "0.2" = "green", "0.5" = "blue")
+  ) +
+  theme(
+    legend.position = "right"
+  )
+
+############################################################################
+# Extract the results for sample size 200
+results0.8_c0 <- results0.8[[paste("correlation: ", 0, sep = "")]][4, ]
+results0.8_c0.2 <- results0.8[[paste("correlation: ", 0.2, sep = "")]][4, ]
+results0.8_c0.5 <- results0.8[[paste("correlation: ", 0.5, sep = "")]][4, ]
+
+# Create a data frame for plotting
+df <- data.frame(
+  Pi_Difference = pi2_values - pi1,
+  Proportion_Rejected_0 = results0.8_c0,
+  Proportion_Rejected_0.2 = results0.8_c0.2,
+  Proportion_Rejected_0.5 = results0.8_c0.5
+)
+
+# Plot
+library(ggplot2)
+ggplot(df, aes(x = Pi_Difference)) +
+  geom_line(aes(y = Proportion_Rejected_0, color = "0"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.2, color = "0.2"), linewidth = 1) +
+  geom_line(aes(y = Proportion_Rejected_0.5, color = "0.5"), linewidth = 1) +
+  geom_hline(yintercept = alpha, color = "black", linewidth = 1) +
+  labs(
+    title = "Proportion Rejected\nfor Sample Size 200\nand pi1 = 0.8",
+    x = "pi2 - pi1",
+    y = "Proportion Rejected"
+  ) +
+  coord_cartesian(ylim = c(0, 1.0), xlim = c(0, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25)) +
+  scale_color_manual(
+    name = "Correlation",
+    values = c("0" = "red", "0.2" = "green", "0.5" = "blue")
+  ) +
+  theme(
+    legend.position = "right"
+  )
+
