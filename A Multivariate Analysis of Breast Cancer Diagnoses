@@ -1,0 +1,169 @@
+set.seed("1234")
+library(stats)
+library(pROC)
+library(glmnet)
+setwd("/Users/younh/Documents/ST537")
+bc_raw <- read.table("wdbc.data.txt", header = F, sep = ",")
+colnames(bc_raw) = c("id_num","diagnosis","radius","texture","perimeter",
+                     "area","smoothness","compactness","concavity","concave_pts",
+                     "symmetry","fractal_dim","radius_se","texture_se","perimeter_se",
+                     "area_se","smoothness_se","compactness_se","concavity_se","concave_pts_se",
+                     "symmetry_se","fractal_dim_se","radius_worst","texture_worst","perimeter_worst",
+                     "area_worst","smoothness_worst","compactness_worst","concavity_worst","concave_pts_worst",
+                     "symmetry_worst","fractal_dim_worst")
+#head(bc_raw)
+
+bc_raw$id_num = as.factor(bc_raw$id_num)
+bc_raw$diagnosis = ifelse(bc_raw$diagnosis == "M", 0, 1)
+bc_raw$diagnosis = as.factor(bc_raw$diagnosis)
+n <- nrow(bc_raw)
+n
+n.test <- round(n * 0.2)
+ind <- sample(1:n,size=n.test,replace=F)
+test <- bc_raw[ind,]
+train <- bc_raw[-ind,]
+
+# Fit logistic regression model
+logistic_model <- glm(diagnosis ~ ., data = train[, -1], family = binomial(link = "logit"))
+# Make predictions
+predictions <- predict(logistic_model,newdata = test[,-1], type = "response")
+# Convert predicted probabilities to class labels (0 or 1)
+predicted_classes <- ifelse(predictions >= 0.5, 1, 0)
+# Calculate accuracy
+accuracy <- mean(predicted_classes == test$diagnosis)
+accuracy
+# Confusion matrix
+conf_matrix <- table(predicted = predicted_classes, actual = test$diagnosis)
+conf_matrix
+# ROC curve
+roc_curve <- roc(test$diagnosis, predictions)
+# Plot ROC curve
+plot(roc_curve)
+# Area under the ROC curve
+auc <- auc(roc_curve)
+auc
+#########################################################################
+#end of model 1 code
+
+
+standardize = function(x){ 
+  z <- (x - mean(x)) / sd(x) 
+  return( z) 
+}
+
+#Start of model 2 code
+#########################################################################
+# Considering all columns except Id and diagnosis columns
+df <- bc_raw[, -(1:2)]
+df
+# Correlation Plot
+ggcorr(df, label = T, label_size = 2, label_round = 1,legend.size = 8)
+
+df <- data.frame(apply(df, 2, function(x) as.numeric(as.character(x))))
+sapply(df, class)
+std.dat <- scale(df, center = T, scale = T)
+apply(std.dat, 2, sd)
+# Perform PCA
+data.pca <- prcomp(std.dat)
+# Extract the importance of each component and decide on number of PCs 
+summary(data.pca)
+# To confirm that 6 PCs is what we need 
+screeplot(data.pca, type="line", main = "")
+#To find the 6 PCs loadings
+round( data.pca$rotation[, 1:6], 3 )
+#To load the PC vectors for all the data
+fin <- round(data.pca$x[1:569,1:6],3)
+fin
+# Converting into a dataframe
+fin_df <- data.frame(fin)
+# Print the dataframe
+print(fin_df)
+combined_df <- cbind(bc_raw, fin_df)
+combined_df
+
+set.seed(1234)
+#Train-Test Split
+n2 <- nrow(combined_df)
+n2
+n2.test <- round(n2 * 0.2)
+ind2 <- sample(1:n2,size=n2.test,replace=F)
+test2 <- combined_df[ind2,]
+train2 <- combined_df[-ind2,]
+
+# Classification
+# Fit logistic regression model
+logistic_model2 <- glm(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6,family = binomial(link = "logit"), data = train2)
+# Make predictions
+predictions2 <- predict(logistic_model2,newdata = test2, type = "response")
+# Convert predicted probabilities to class labels (0 or 1)
+predicted_classes2 <- ifelse(predictions2 >= 0.5, 1, 0)
+
+# Calculate accuracy
+accuracy2 <- mean(predicted_classes2 == test2$diagnosis)
+accuracy2
+# Confusion matrix
+conf_matrix2 <- table(predicted = predicted_classes2, actual = test2$diagnosis)
+conf_matrix2
+# ROC curve
+roc_curve2 <- roc(test2$diagnosis, predictions2)
+# Plot ROC curve
+plot(roc_curve2)
+# Area under the ROC curve
+auc2 <- auc(roc_curve2)
+auc2
+#########################################################################
+#end of model 2 code
+
+
+#Start of model 3 code
+#########################################################################
+# All of the covariates are standardized to their mean since many of them are using different units/scales
+bc_dat_stdized = as.data.frame(apply(bc_raw[,3:32], MARGIN = 2, scale))
+bc_allstd = as.data.frame(cbind(id_num = bc_raw$id_num, diagnosis = bc_raw$diagnosis,bc_dat_stdized))
+# set seed for reproducibility
+set.seed(1234)
+# total number of items
+n3 <- nrow(bc_allstd)
+# size of test set
+n.test3 <- round(n3 * 0.2)
+# obtain the test and training sets
+ind3 <- sample(1:n3, size = n.test3, replace = F)
+test3 <- bc_allstd[ind3, ]
+train3 <- bc_allstd[-ind3, ]
+#Convert bc_raw data to usable model matrix
+xfactors = model.matrix(glm(diagnosis ~ ., family = binomial(link = "logit"), data = train3))
+#perform k-fold cross-validation to find optimal lambda value
+cv_model <- cv.glmnet(xfactors, train3$diagnosis, alpha = 1, family = "binomial")
+plot(cv_model)
+#find optimal lambda value that minimizes test MSE
+best_lambda <- cv_model$lambda.min
+best_lambda
+# Perform lasso regression to shrink predictors 
+glm_lasso_mod = glmnet(xfactors, train3$diagnosis, alpha=1, family="binomial")
+summary(glm_lasso_mod)
+plot(glm_lasso_mod, xvar="lambda", lwd = 2)
+#Fit the lasso regression model to determine the predictors we should retain
+best_mod_lasso = glmnet(xfactors, train3$diagnosis, alpha = 1, family = "binomial", lambda = best_lambda)
+coef(best_mod_lasso)
+# Fitting the optimal model according to our Lasso regression variable selection.
+best_glm_mod = glm(diagnosis ~ concavity + concave_pts + fractal_dim + radius_se + texture_se + smoothness_se + compactness_se + fractal_dim_se + radius_worst + texture_worst + perimeter_worst + area_worst + smoothness_worst + concavity_worst + concave_pts_worst + symmetry_worst, family = binomial(link = "logit"), data = train3)
+summary(best_glm_mod)
+# Make predictions on the testing dataset
+predictions3 <- predict(best_glm_mod, newdata = test3, type = "response")
+# Convert predicted probabilities to class labels (0 or 1)
+predicted_classes3 <- ifelse(predictions3 >= 0.5, 1, 0)
+# Calculate accuracy
+accuracy3 <- mean(predicted_classes3 == test3$diagnosis)
+accuracy3
+# Confusion matrix
+conf_matrix3 <- table(predicted = predicted_classes3, actual = test3$diagnosis)
+conf_matrix3
+# ROC curve
+roc_curve3 <- roc(test3$diagnosis, predictions3)
+# Plot ROC curve
+plot(roc_curve3)
+# Area under the ROC curve
+auc3 <- auc(roc_curve3)
+auc3
+#########################################################################
+#end of model 3 code
